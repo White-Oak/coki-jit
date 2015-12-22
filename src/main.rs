@@ -14,6 +14,7 @@ use grammar::*;
 use parser::program;
 use lexer::token;
 use ir::translate;
+use compiler::compile;
 use std::os;
 use std::fs::File;
 use std::env::args;
@@ -26,6 +27,7 @@ pub mod grammar;
 pub mod parser;
 pub mod ir;
 pub mod asm_ops;
+pub mod compiler;
 
 fn main() {
 
@@ -58,7 +60,8 @@ fn interp<'a>(raw: &'a str) {
               println!("Error: unexpected token {:?}", rest[0]);
             } else {
               //run(&stmts);
-              translate(&stmts);
+              let ops = translate(&stmts);
+              compile(&ops)
             }
           }
           Err(err) => {println!("Parse Error: {:?}", err);}
