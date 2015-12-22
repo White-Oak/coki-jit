@@ -1,4 +1,5 @@
 use grammar::*;
+use asm_ops::*;
 
 fn mult(terms: &[MultTerm], mut ops: &mut Vec<AsmOp>){
     for term in terms {
