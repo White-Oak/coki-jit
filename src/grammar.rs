@@ -30,10 +30,10 @@ pub struct MultTerm(pub MultOp, pub Expr);
 #[derive(Clone)]
 #[derive(PartialEq)]
 pub enum Expr {
-  Variable(String),  
+  Variable(String),
   Num(i32),
   AddSub(Vec<AddTerm>), //a + b - c + d becomes [(+ a) (+ b) (- c) (+ d)]
-  MultDiv(Vec<MultTerm>), 
+  MultDiv(Vec<MultTerm>),
 }
 
 
@@ -93,3 +93,19 @@ pub enum Token {
   Cmp(Comparator),
 }
 
+#[derive(Debug, Eq, PartialEq, CLone)]
+pub enum AsmOp{
+    Add(Register, AsmOperand),
+    Mov(Register, AsmOperand),
+}
+
+#[derive(Debug, Eq, PartialEq, CLone)]
+pub enum AsmOperand{
+    Register(Register),
+    Value(i32),
+}
+
+#[derive(Debug, Eq, PartialEq, CLone)]
+pub enum Register{
+    RAX,
+}
