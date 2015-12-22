@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use grammar::*;
 use parser::program;
 use lexer::token;
+use ir::translate;
 use std::os;
 use std::fs::File;
 use std::env::args;
@@ -23,13 +24,14 @@ use std::io::Read;
 pub mod lexer;
 pub mod grammar;
 pub mod parser;
+pub mod ir;
 
 fn main() {
-  
+
   let mut args = args();
 
   let file = args.nth(1).unwrap();
-  
+
   let mut contents = String::new();
   let mut f = File::open(file.as_str()).unwrap();
   f.read_to_string(&mut contents);
@@ -44,7 +46,7 @@ fn interp<'a>(raw: &'a str) {
   let lexer = token();
   match lexer.parse(raw) {
     Ok((tokens, rest)) => {
-      println!("{:?}", tokens);
+      println!("{:?}\n", tokens);
       if rest != "" {
         println!("Parser error at: {:?}", rest)
       } else {
@@ -54,7 +56,8 @@ fn interp<'a>(raw: &'a str) {
             if rest.len() > 0 {
               println!("Error: unexpected token {:?}", rest[0]);
             } else {
-              run(&stmts);
+              //run(&stmts);
+              translate(&stmts);
             }
           }
           Err(err) => {println!("Parse Error: {:?}", err);}
@@ -91,7 +94,7 @@ fn run(prog: &Vec<Statement>) {
         },
         Statement::If(ref lhs, ref cmp, ref rhs, ref then_block, ref else_block) => {
           let is_true = compare(lhs, cmp, rhs, env);
-          if is_true {            
+          if is_true {
             let &Block(ref p) = then_block;
             runi32ernal(p, env);
           } else {
@@ -156,7 +159,7 @@ fn eval(expr: &Expr, env: &HashMap<String,i32>) -> Result<i32, String> {
           Ok(value) => match *sign{
             MultOp::Multiply  => {total *= value;}
             MultOp::Divide    => {total /= value;}
-            MultOp::Modulo    => {total %= value;} 
+            MultOp::Modulo    => {total %= value;}
           },
           Err(err) => {
             return Err(err);
@@ -217,5 +220,3 @@ while n <= 100 {
 }
 
 */
-  
-
