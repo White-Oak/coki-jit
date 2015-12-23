@@ -42,7 +42,7 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
 }
 
 fn write_asm(str: &String) {
-    let path = Path::new("temp.asm");
+    let path = Path::new("target/temp.asm");
     let display = path.display();
 
     let mut file = match File::create(&path) {
@@ -59,7 +59,7 @@ fn write_asm(str: &String) {
 }
 
 fn assemble() {
-    let output = Command::new("fasm").arg("temp.asm").output().unwrap_or_else(|e| {
+    let output = Command::new("fasm").arg("target/temp.asm").output().unwrap_or_else(|e| {
         panic!("failed to execute process: {}", e)
     });
 
@@ -73,7 +73,7 @@ fn assemble() {
 }
 
 fn read_bytes() -> Vec<u8>{
-    let path = Path::new("temp.bin");
+    let path = Path::new("target/temp.bin");
     let display = path.display();
 
     let mut file = match File::open(&path) {
