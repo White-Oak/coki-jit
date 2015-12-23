@@ -12,11 +12,29 @@ impl AsmProgram{
         println!("{:?}", &op);
         self.contents.push(op);
     }
+
     fn new() -> AsmProgram {
         AsmProgram {contents: Vec::new()}
     }
 }
 
+impl Extend<AsmOp> for AsmProgram {
+    fn extend<T: IntoIterator<Item=AsmOp>>(&mut self, iterable: T) {
+        for elem in iterable {
+            self.add(elem);
+        }
+    }
+}
+
+fn move_into_expr<'a, F: FnOnce()>(fun: F) -> Vec<AsmOp>{
+    let mut ops = Vec::new();
+    ops.push(Push(RegisterOperand(Register::RAX)));
+    fun();
+    ops.push(Pop(RegisterOperand(Register::RBX)));
+    ops.push(Pop(RegisterOperand(Register::RAX)));
+    ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+    ops
+}
 fn mult<'a>(terms: &[MultTerm], mut ops: &'a mut AsmProgram){
     let mut counter = 0;
     for term in terms {
@@ -30,18 +48,12 @@ fn mult<'a>(terms: &[MultTerm], mut ops: &'a mut AsmProgram){
             match *expr {
                 Expr::Num(ref num) => ops.add(Mul(Register::RAX, Value(*num))),
                 Expr::AddSub(ref terms)  => {
-                    ops.add(Push(RegisterOperand(Register::RAX)));
-                    add(terms.as_slice(), ops);
-                    ops.add(Pop(RegisterOperand(Register::RBX)));
-                    ops.add(Pop(RegisterOperand(Register::RAX)));
-                    ops.add(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+                    let _ops = move_into_expr(|| add(terms.as_slice(), ops));
+                    ops.extend(_ops)
                 },
                 Expr::MultDiv(ref terms) => {
-                    ops.add(Push(RegisterOperand(Register::RAX)));
-                    mult(terms.as_slice(), ops);
-                    ops.add(Pop(RegisterOperand(Register::RBX)));
-                    ops.add(Pop(RegisterOperand(Register::RAX)));
-                    ops.add(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+                    let _ops = move_into_expr(|| mult(terms.as_slice(), ops));
+                    ops.extend(_ops)
                 }
                 _ => panic!()
             }
