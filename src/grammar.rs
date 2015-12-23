@@ -26,23 +26,6 @@ pub struct AddTerm(pub AddOp, pub Expr);
 #[derive(PartialEq)]
 pub struct MultTerm(pub MultOp, pub Expr);
 
-pub trait Termable{
-    fn get_expr(&self) -> &Expr;
-}
-pub struct TermableStruct(pub Termable);
-
-impl Termable for AddTerm{
-    fn get_expr(&self) -> &Expr{
-        &self.1
-    }
-}
-
-impl Termable for MultTerm{
-    fn get_expr(&self) -> &Expr{
-        &self.1
-    }
-}
-
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(PartialEq)]

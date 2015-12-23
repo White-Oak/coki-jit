@@ -32,14 +32,14 @@ let mut ops = Vec::new();
             Expr::Num(ref num) => ops.push(Add(Register::RAX, Value(*num))),
             Expr::AddSub(ref terms)  => {
                 ops.push(Push(RegisterOperand(Register::RAX)));
-                ops.extend(arithm(terms.as_slice()));
+                ops.extend(add(terms.as_slice()));
                 ops.push(Pop(RegisterOperand(Register::RBX)));
                 ops.push(Pop(RegisterOperand(Register::RAX)));
                 ops.push(Add(Register::RAX, RegisterOperand(Register::RBX)));
             },
             Expr::MultDiv(ref terms) => {
                 ops.push(Push(RegisterOperand(Register::RAX)));
-                ops.extend(arithm(terms.as_slice()));
+                ops.extend(mult(terms.as_slice()));
                 ops.push(Pop(RegisterOperand(Register::RBX)));
                 ops.push(Pop(RegisterOperand(Register::RAX)));
                 ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)));
@@ -54,22 +54,39 @@ fn move_into_first_term_expr(expr: &Expr) -> Vec<AsmOp>{
     match *expr {
         Expr::Num(ref num) => ops.push(Mov(Register::RAX, Value(*num))),
         Expr::AddSub(ref terms) => {
-            ops.extend(arithm(terms.as_slice()));
+            ops.extend(add(terms.as_slice()));
             ops.push(Pop(RegisterOperand(Register::RAX)));
         },
         Expr::MultDiv(ref terms) => {
-            ops.extend(arithm(terms.as_slice()));
+            ops.extend(mult(terms.as_slice()));
             ops.push(Pop(RegisterOperand(Register::RAX)));
         },
         _ => panic!()
     }
     ops
 }
-fn arithm(terms: &[Termable]) -> Vec<AsmOp>{
+
+fn add(terms: &[AddTerm]) -> Vec<AsmOp>{
     let mut ops = Vec::new();
     let mut counter = 0;
-    for term in *terms {
-        let expr = term.get_expr;
+    for term in terms {
+        let &AddTerm(_, ref expr) = term;
+        if counter == 0{
+            ops.extend(move_into_first_term_expr(expr))
+        } else {
+            ops.extend(move_into_expr(expr));
+        }
+        counter +=1;
+    }
+    ops.push(Push(RegisterOperand(Register::RAX)));
+    ops
+}
+
+fn mult(terms: &[MultTerm]) -> Vec<AsmOp>{
+    let mut ops = Vec::new();
+    let mut counter = 0;
+    for term in terms {
+        let &MultTerm(_, ref expr) = term;
         if counter == 0{
             ops.extend(move_into_first_term_expr(expr))
         } else {
@@ -88,7 +105,7 @@ pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
         match *stmt {
             Statement::Assign(_, ref expr) => {
                 match *expr {
-                    Expr::AddSub(ref terms) => ops.extend(arithm(terms.as_slice())),
+                    Expr::AddSub(ref terms) => ops.extend(add(terms.as_slice())),
                     _ => panic!()
                 }
             },
