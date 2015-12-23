@@ -23,6 +23,7 @@ use std::io::Read;
 
 pub mod lexer;
 pub mod grammar;
+pub mod grammar_lexer;
 pub mod parser;
 pub mod ir;
 pub mod asm_ops;

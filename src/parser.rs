@@ -1,4 +1,5 @@
 use grammar::*;
+use grammar_lexer::*;
 
 use peruse::slice_parsers::*;
 

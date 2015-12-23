@@ -1,6 +1,7 @@
 use peruse::slice_parsers::*;
 use peruse::string_parsers::*;
 
+use grammar_lexer::*;
 use grammar::*;
 use std::str::FromStr;
 

@@ -26,6 +26,23 @@ pub struct AddTerm(pub AddOp, pub Expr);
 #[derive(PartialEq)]
 pub struct MultTerm(pub MultOp, pub Expr);
 
+pub trait Termable{
+    fn get_expr(&self) -> &Expr;
+}
+pub struct TermableStruct(pub Termable);
+
+impl Termable for AddTerm{
+    fn get_expr(&self) -> &Expr{
+        &self.1
+    }
+}
+
+impl Termable for MultTerm{
+    fn get_expr(&self) -> &Expr{
+        &self.1
+    }
+}
+
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(PartialEq)]
@@ -64,31 +81,4 @@ pub enum Comparator {
   CNeq, // !=
   CGeq, // >=
   CLeq, // <=
-}
-
-
-
-#[derive(Debug)]
-#[derive(Eq)]
-#[derive(PartialEq)]
-#[derive(Clone)]
-pub enum Token {
-  Equals,
-  Ident(String),
-  Number(i32),
-  PlusSign,
-  MinusSign,
-  MultSign,
-  DivideSign,
-  ModuloSign,
-  OutputCmd,
-  NewLine,
-  OpenParen,
-  CloseParen,
-  OpenBrace,
-  CloseBrace,
-  IfKeyword,
-  ElseKeyword,
-  WhileKeyword,
-  Cmp(Comparator),
 }
