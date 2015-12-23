@@ -1,3 +1,7 @@
+# Coki JIT
+I've found [peruse](https://github.com/DanSimon/peruse.git) to be a great parser combinator library and [coki](https://github.com/DanSimon/coki.git) — an amazing point to start using it.   
+My goal was to implement a working JIT for a simple language. Original README is providen below:
+
 # Coki
 
 Coki is a simple language written in Rust.  Right now Coki is
