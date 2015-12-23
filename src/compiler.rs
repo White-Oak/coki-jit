@@ -21,7 +21,7 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
 
     write_asm(&str);
     assemble();
-    read_bytes();
+    read_bytes()
 }
 
 fn write_asm(str: &String) {
