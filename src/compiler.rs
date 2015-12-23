@@ -33,7 +33,7 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
             AsmOp::Mov(ref dest, ref operand) => match *operand{
                 AsmOperand::RegisterOperand(ref source) => format!("mov {:?}, {:?}\n", dest, source),
                 AsmOperand::Value(ref i) => format!("mov {:?}, {:?}\n", dest, i),
-                _ => "".to_string()
+                AsmOperand::Memory(ref i) => format!("mov {:?}, [{:?}]\n", dest, i),
             },
             AsmOp::Out => "ret".to_string() ,
             // _ => {}
