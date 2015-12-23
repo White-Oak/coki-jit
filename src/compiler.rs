@@ -9,31 +9,37 @@ use std::process::Command;
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
     let mut str = "use64\n".to_string();
     for op in ops{
-        match *op {
+        let temp_str = match *op {
             AsmOp::Add(ref dest, ref operand) => match *operand{
-                AsmOperand::RegisterOperand(ref source) => str = str + &format!("add {:?}, {:?}\n", dest, source),
-                AsmOperand::Value(ref i) => str = str + &format!("add {:?}, {:?}\n", dest, i)
+                AsmOperand::RegisterOperand(ref source) =>  format!("add {:?}, {:?}\n", dest, source),
+                AsmOperand::Value(ref i) => format!("add {:?}, {:?}\n", dest, i),
+                _ => "".to_string()
             },
             AsmOp::Mul(ref dest, ref operand) => match *operand{
-                AsmOperand::RegisterOperand(ref source) => str = str + &format!("imul {:?}, {:?}\n", dest, source),
-                AsmOperand::Value(ref i) => str = str + &format!("imul {:?}, {:?}\n", dest, i)
+                AsmOperand::RegisterOperand(ref source) => format!("imul {:?}, {:?}\n", dest, source),
+                AsmOperand::Value(ref i) => format!("imul {:?}, {:?}\n", dest, i),
+                _ => "".to_string()
             },
             AsmOp::Pop(ref dest) => match *dest {
-                AsmOperand::RegisterOperand(ref dest) => str = str + &format!("pop {:?}\n", dest),
-                AsmOperand::Value(ref dest) => str = str + &format!("pop {:?}\n", dest)
+                AsmOperand::RegisterOperand(ref dest) =>  format!("pop {:?}\n", dest),
+                AsmOperand::Value(ref dest) => format!("pop {:?}\n", dest),
+                AsmOperand::Memory(ref mem) => format!("popw [{}]\n", mem)
             },
             AsmOp::Push(ref dest) => match *dest {
-                AsmOperand::RegisterOperand(ref dest) => str = str + &format!("push {:?}\n", dest),
-                AsmOperand::Value(ref dest) => str = str + &format!("push {:?}\n", dest)
+                AsmOperand::RegisterOperand(ref dest) => format!("push {:?}\n", dest),
+                AsmOperand::Value(ref dest) => format!("push {:?}\n", dest),
+                AsmOperand::Memory(ref mem) => format!("pushw [{}]\n", mem)
             },
             AsmOp::Mov(ref dest, ref operand) => match *operand{
-                AsmOperand::RegisterOperand(ref source) => str = str + &format!("mov {:?}, {:?}\n", dest, source),
-                AsmOperand::Value(ref i) => str = str + &format!("mov {:?}, {:?}\n", dest, i)
+                AsmOperand::RegisterOperand(ref source) => format!("mov {:?}, {:?}\n", dest, source),
+                AsmOperand::Value(ref i) => format!("mov {:?}, {:?}\n", dest, i),
+                _ => "".to_string()
             },
+            AsmOp::Out => "ret".to_string() ,
             // _ => {}
-        }
+        };
+        str = str + &temp_str;
     }
-    str = str + "pop rax\n";
     println!("\nOutput assembly is:\n{}\n",str);
 
     write_asm(&str);
@@ -67,6 +73,7 @@ fn assemble() {
         println!("status: {}", output.status);
         println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
         println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+        panic!("Can't assemble!");
     } else {
         println!("Successfully assembled to temp.bin");
     }

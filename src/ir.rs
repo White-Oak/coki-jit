@@ -98,33 +98,57 @@ fn mult(terms: &[MultTerm]) -> Vec<AsmOp>{
     ops
 }
 
+use std::collections::HashMap;
+
+struct VarStore{
+    variables: HashMap<String, u16>,
+    current_address: u16
+}
+
+impl VarStore{
+    fn new() -> VarStore{
+        VarStore{variables: HashMap::new(), current_address: 1000}
+    }
+
+    fn get_var_address(&mut self, name: &String) -> u16{
+        let result = self.variables.insert(name.clone(), self.current_address);
+        match result{
+            Some(address) => address,
+            None =>{
+                self.current_address += 1;
+                self.current_address - 1
+            }
+        }
+    }
+}
+
+fn calculate_expr(expr: &Expr, var_store: &mut VarStore) -> Vec<AsmOp>{
+    let mut ops = Vec::new();
+    match *expr {
+        Expr::AddSub(ref terms) => ops.extend(add(terms.as_slice())),
+        Expr::MultDiv(ref terms) => ops.extend(mult(terms.as_slice())),
+        Expr::Num(ref num) => ops.push(Push(Value(*num))),
+        Expr::Variable(ref name) => ops.push(Push(Memory(var_store.get_var_address(name)))),
+    }
+    ops
+}
+
 pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
     let mut ops =  AsmProgram::new();
+    let mut var_store = VarStore::new();
     for stmt in block {
         println!("\n{:?}\nIs translated into:", stmt);
         match *stmt {
-            Statement::Assign(_, ref expr) => {
-                match *expr {
-                    Expr::AddSub(ref terms) => ops.extend(add(terms.as_slice())),
-                    _ => panic!()
-                }
-            },
+            Statement::Assign(ref name, ref expr) => {
+                ops.extend(calculate_expr(expr, &mut var_store));
+                ops.add(Pop(Memory(var_store.get_var_address(name))));
+            }
+            Statement::Output(ref expr) => {
+                ops.extend(calculate_expr(expr, &mut var_store));
+                ops.add(Pop(RegisterOperand(Register::RAX)));
+            }
             _ => {}
         }
     }
     Box::new(ops.contents)
 }
-/*
-Assign("a",
-AddSub(
-[AddTerm(Add, MultDiv([MultTerm(Multiply, Num(1))])),
-AddTerm(Add, MultDiv([MultTerm(Multiply, Num(3))])),
-AddTerm(Add, MultDiv([MultTerm(Multiply, Num(1))]))]
-)
-)*/
-/*
-mov rax, 1
-add rax, 3
-add rax, 1
-ret
-*/
