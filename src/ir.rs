@@ -1,32 +1,100 @@
 use grammar::*;
 use asm_ops::*;
+use asm_ops::AsmOperand::*;
+use asm_ops::AsmOp::*;
 
-fn mult(terms: &[MultTerm], mut ops: &mut Vec<AsmOp>){
-    for term in terms {
-        let &MultTerm(_, ref expr) = term;
-        match *expr {
-            Expr::Num(ref num) =>  {
-                let op = AsmOp::Add(Register::RAX, AsmOperand::Value(*num));
-                println!("{:?}", op);
-                ops.push(op)
-            },
-            _ => panic!()
-        }
+struct AsmProgram {
+    contents : Vec<AsmOp>
+}
+
+impl AsmProgram{
+    fn add(&mut self, op: AsmOp){
+        println!("{:?}", &op);
+        self.contents.push(op);
+    }
+    fn new() -> AsmProgram {
+        AsmProgram {contents: Vec::new()}
     }
 }
 
-fn add(terms: &[AddTerm], mut ops: &mut Vec<AsmOp>){
+fn mult<'a>(terms: &[MultTerm], mut ops: &'a mut AsmProgram){
+    let mut counter = 0;
     for term in terms {
-        let &AddTerm(_, ref expr) = term;
-        match *expr {
-            Expr::MultDiv(ref terms) => mult(terms.as_slice(), ops),
-            _ => panic!()
+        let &MultTerm(ref op, ref expr) = term;
+        if counter == 0{
+            match *expr {
+                Expr::Num(ref num) => ops.add(Mov(Register::RAX, Value(*num))),
+                _ => panic!()
+            }
+        } else {
+            match *expr {
+                Expr::Num(ref num) => ops.add(Mul(Register::RAX, Value(*num))),
+                Expr::AddSub(ref terms)  => {
+                    ops.add(Push(RegisterOperand(Register::RAX)));
+                    add(terms.as_slice(), ops);
+                    ops.add(Pop(RegisterOperand(Register::RBX)));
+                    ops.add(Pop(RegisterOperand(Register::RAX)));
+                    ops.add(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+                },
+                Expr::MultDiv(ref terms) => {
+                    ops.add(Push(RegisterOperand(Register::RAX)));
+                    mult(terms.as_slice(), ops);
+                    ops.add(Pop(RegisterOperand(Register::RBX)));
+                    ops.add(Pop(RegisterOperand(Register::RAX)));
+                    ops.add(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+                }
+                _ => panic!()
+            }
         }
+        counter +=1;
     }
+    ops.add(Push(RegisterOperand(Register::RAX)));
+}
+
+fn add<'a>(terms: &[AddTerm], mut ops: &'a mut AsmProgram){
+    let mut counter = 0;
+    for term in terms {
+        let &AddTerm(ref op, ref expr) = term;
+        if counter == 0{
+            match *expr {
+                Expr::Num(ref num) => ops.add(Mov(Register::RAX, Value(*num))),
+                Expr::AddSub(ref terms) => {
+                    add(terms.as_slice(), ops);
+                    ops.add(Pop(RegisterOperand(Register::RAX)));
+                },
+                Expr::MultDiv(ref terms) => {
+                    mult(terms.as_slice(), ops);
+                    ops.add(Pop(RegisterOperand(Register::RAX)));
+                },
+                _ => panic!()
+            }
+        } else {
+            match *expr {
+                Expr::Num(ref num) => ops.add(Add(Register::RAX, Value(*num))),
+                Expr::AddSub(ref terms)  => {
+                    ops.add(Push(RegisterOperand(Register::RAX)));
+                    add(terms.as_slice(), ops);
+                    ops.add(Pop(RegisterOperand(Register::RBX)));
+                    ops.add(Pop(RegisterOperand(Register::RAX)));
+                    ops.add(Add(Register::RAX, RegisterOperand(Register::RBX)));
+                },
+                Expr::MultDiv(ref terms) => {
+                    ops.add(Push(RegisterOperand(Register::RAX)));
+                    mult(terms.as_slice(), ops);
+                    ops.add(Pop(RegisterOperand(Register::RBX)));
+                    ops.add(Pop(RegisterOperand(Register::RAX)));
+                    ops.add(Add(Register::RAX, RegisterOperand(Register::RBX)));
+                }
+                _ => panic!()
+            }
+        }
+        counter +=1;
+    }
+    ops.add(Push(RegisterOperand(Register::RAX)));
 }
 
 pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
-    let mut ops =  Vec::new();
+    let mut ops =  AsmProgram::new();
     for stmt in block {
         println!("\n{:?}\nIs translated into:", stmt);
         match *stmt {
@@ -39,7 +107,7 @@ pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
             _ => {}
         }
     }
-    Box::new(ops)
+    Box::new(ops.contents)
 }
 /*
 Assign("a",

@@ -7,16 +7,33 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
-    let mut str = "use64\nmov RAX, 0\n".to_string();
+    let mut str = "use64\n".to_string();
     for op in ops{
         match *op {
             AsmOp::Add(ref dest, ref operand) => match *operand{
-                AsmOperand::Register(ref source) => str = str + &format!("add {:?}, {:?}\n", dest, source),
+                AsmOperand::RegisterOperand(ref source) => str = str + &format!("add {:?}, {:?}\n", dest, source),
                 AsmOperand::Value(ref i) => str = str + &format!("add {:?}, {:?}\n", dest, i)
             },
-            _ => {}
+            AsmOp::Mul(ref dest, ref operand) => match *operand{
+                AsmOperand::RegisterOperand(ref source) => str = str + &format!("imul {:?}, {:?}\n", dest, source),
+                AsmOperand::Value(ref i) => str = str + &format!("imul {:?}, {:?}\n", dest, i)
+            },
+            AsmOp::Pop(ref dest) => match *dest {
+                AsmOperand::RegisterOperand(ref dest) => str = str + &format!("pop {:?}\n", dest),
+                AsmOperand::Value(ref dest) => str = str + &format!("pop {:?}\n", dest)
+            },
+            AsmOp::Push(ref dest) => match *dest {
+                AsmOperand::RegisterOperand(ref dest) => str = str + &format!("push {:?}\n", dest),
+                AsmOperand::Value(ref dest) => str = str + &format!("push {:?}\n", dest)
+            },
+            AsmOp::Mov(ref dest, ref operand) => match *operand{
+                AsmOperand::RegisterOperand(ref source) => str = str + &format!("mov {:?}, {:?}\n", dest, source),
+                AsmOperand::Value(ref i) => str = str + &format!("mov {:?}, {:?}\n", dest, i)
+            },
+            // _ => {}
         }
     }
+    str = str + "pop rax\n";
     println!("\nOutput assembly is:\n{}\n",str);
 
     write_asm(&str);
