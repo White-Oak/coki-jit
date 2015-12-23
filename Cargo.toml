@@ -2,14 +2,20 @@
 
 name = "coki"
 version = "0.1.0"
-authors = [ "Dan Simon <dan@dansimon.info>" ]
+authors = [ "Dan Simon <dan@dansimon.info>", "White Oak <lpzhelud@gmail.com>" ]
 
 [dependencies.peruse]
-
 git = "https://github.com/DanSimon/peruse.git"
 branch = "no-slice"
 
 [dependencies]
 regex = "0.1.10"
+libc = "0.2.2"
 
+[target.x86_64-pc-windows-gnu.dependencies]
+winapi = "0.2"
+kernel32-sys = "0.2"
 
+[target.i686-pc-windows-gnu.dependencies]
+winapi = "0.2"
+kernel32-sys = "0.2"

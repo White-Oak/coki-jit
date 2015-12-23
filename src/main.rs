@@ -15,6 +15,8 @@ use parser::program;
 use lexer::token;
 use ir::translate;
 use compiler::compile;
+use jit::get_jit;
+
 use std::os;
 use std::fs::File;
 use std::env::args;
@@ -28,6 +30,7 @@ pub mod parser;
 pub mod ir;
 pub mod asm_ops;
 pub mod compiler;
+pub mod jit;
 
 fn main() {
 
@@ -60,7 +63,7 @@ fn interp<'a>(raw: &'a str) {
               println!("Error: unexpected token {:?}", rest[0]);
             } else {
               let ops = translate(&stmts);
-              compile(&ops)
+              let bytes = compile(&ops);
             }
           }
           Err(err) => {println!("Parse Error: {:?}", err);}
