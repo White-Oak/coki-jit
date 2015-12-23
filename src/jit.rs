@@ -93,5 +93,6 @@ pub fn get_jit(bytes: Vec<u8>) -> (fn() -> i64) {
     for byte in bytes{
         jit.add(byte);
     }
+    println!("Program loaded into the memory"); 
     unsafe { mem::transmute(jit.contents) }
 }
