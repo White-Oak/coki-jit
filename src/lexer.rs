@@ -1,4 +1,3 @@
-use regex::{Captures, Regex};
 use peruse::slice_parsers::*;
 use peruse::string_parsers::*;
 

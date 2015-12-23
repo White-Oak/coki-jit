@@ -38,7 +38,7 @@ fn move_into_expr<'a, F: FnOnce()>(fun: F) -> Vec<AsmOp>{
 fn mult<'a>(terms: &[MultTerm], mut ops: &'a mut AsmProgram){
     let mut counter = 0;
     for term in terms {
-        let &MultTerm(ref op, ref expr) = term;
+        let &MultTerm(_, ref expr) = term;
         if counter == 0{
             match *expr {
                 Expr::Num(ref num) => ops.add(Mov(Register::RAX, Value(*num))),
@@ -66,7 +66,7 @@ fn mult<'a>(terms: &[MultTerm], mut ops: &'a mut AsmProgram){
 fn add<'a>(terms: &[AddTerm], mut ops: &'a mut AsmProgram){
     let mut counter = 0;
     for term in terms {
-        let &AddTerm(ref op, ref expr) = term;
+        let &AddTerm(_, ref expr) = term;
         if counter == 0{
             match *expr {
                 Expr::Num(ref num) => ops.add(Mov(Register::RAX, Value(*num))),

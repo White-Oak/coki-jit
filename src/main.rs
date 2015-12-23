@@ -1,6 +1,5 @@
 #![feature(custom_derive)]
 #![feature(unboxed_closures)]
-#![feature(collections)]
 #![feature(convert)]
 extern crate regex;
 extern crate peruse;
@@ -17,10 +16,8 @@ use ir::translate;
 use compiler::compile;
 use jit::get_jit;
 
-use std::os;
 use std::fs::File;
 use std::env::args;
-use std::path::Path;
 use std::io::Read;
 
 
@@ -40,7 +37,7 @@ fn main() {
 
   let mut contents = String::new();
   let mut f = File::open(file.as_str()).unwrap();
-  f.read_to_string(&mut contents);
+  let _ = f.read_to_string(&mut contents);
 
   interp(contents.as_str());
 
