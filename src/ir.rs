@@ -26,76 +26,79 @@ impl Extend<AsmOp> for AsmProgram {
     }
 }
 
-fn move_into_expr(expr: &Expr, var_store: &VarStore) -> Vec<AsmOp>{
-    let mut ops = Vec::new();
-    match *expr {
-        Expr::Num(ref num) => ops.push(Add(Register::RAX, Value(*num))),
-        Expr::AddSub(ref terms)  => {
+trait Asmable{
+    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>;
+}
+
+impl Asmable for Expr{
+    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
+        let mut ops = Vec::new();
+        fn add(terms: &[AddTerm], var_store: &VarStore) -> Vec<AsmOp>{
+            let mut ops = Vec::new();
+            for term in terms {
+                ops.extend(term.get_ops(var_store));
+            }
             ops.push(Push(RegisterOperand(Register::RAX)));
-            ops.extend(add(terms.as_slice(), var_store));
-            ops.push(Pop(RegisterOperand(Register::RBX)));
-            ops.push(Pop(RegisterOperand(Register::RAX)));
-            ops.push(Add(Register::RAX, RegisterOperand(Register::RBX)));
-        },
-        Expr::MultDiv(ref terms) => {
+            ops
+        }
+        fn mult(terms: &[MultTerm], var_store: &VarStore) -> Vec<AsmOp>{
+            let mut ops = Vec::new();
+            for term in terms {
+                ops.extend(term.get_ops(var_store));
+            }
             ops.push(Push(RegisterOperand(Register::RAX)));
-            ops.extend(mult(terms.as_slice(), var_store));
-            ops.push(Pop(RegisterOperand(Register::RBX)));
-            ops.push(Pop(RegisterOperand(Register::RAX)));
-            ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)));
-        },
-        Expr::Variable(ref name) => ops.push(Add(Register::RAX, Memory(var_store.get_var_address_r(name))))
-    }
-    ops
-}
-
-fn move_into_first_term_expr(expr: &Expr, var_store: &VarStore) -> Vec<AsmOp>{
-    let mut ops = Vec::new();
-    match *expr {
-        Expr::Num(ref num) => ops.push(Mov(Register::RAX, Value(*num))),
-        Expr::AddSub(ref terms) => {
-            ops.extend(add(terms.as_slice(), var_store));
-            ops.push(Pop(RegisterOperand(Register::RAX)));
-        },
-        Expr::MultDiv(ref terms) => {
-            ops.extend(mult(terms.as_slice(), var_store));
-            ops.push(Pop(RegisterOperand(Register::RAX)));
-        },
-        Expr::Variable(ref name) => ops.push(Mov(Register::RAX, Memory(var_store.get_var_address_r(name))))
-    }
-    ops
-}
-
-fn add(terms: &[AddTerm], var_store: &VarStore) -> Vec<AsmOp>{
-    let mut ops = Vec::new();
-    let mut counter = 0;
-    for term in terms {
-        let &AddTerm(_, ref expr) = term;
-        if counter == 0{
-            ops.extend(move_into_first_term_expr(expr, var_store))
-        } else {
-            ops.extend(move_into_expr(expr, var_store));
+            ops
         }
-        counter +=1;
+        match *self {
+            Expr::AddSub(ref terms) => ops.extend(add(terms.as_slice(), var_store)),
+            Expr::MultDiv(ref terms) => ops.extend(mult(terms.as_slice(), var_store)),
+            Expr::Num(ref num) => ops.push(Push(Value(*num))),
+            Expr::Variable(ref name) => ops.push(Push(Memory(var_store.get_var_address_r(name)))),
+        }
+        ops
     }
-    ops.push(Push(RegisterOperand(Register::RAX)));
-    ops
 }
 
-fn mult(terms: &[MultTerm], var_store: &VarStore) -> Vec<AsmOp>{
-    let mut ops = Vec::new();
-    let mut counter = 0;
-    for term in terms {
-        let &MultTerm(_, ref expr) = term;
-        if counter == 0{
-            ops.extend(move_into_first_term_expr(expr, var_store))
-        } else {
-            ops.extend(move_into_expr(expr, var_store));
+impl Asmable for AddTerm{
+    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
+        let &AddTerm(ref op, ref expr) = self;
+        let mut ops = Vec::new();
+        match *op{
+            AddOp::Start => {
+                ops.extend(expr.get_ops(var_store));
+                ops.push(Pop(RegisterOperand(Register::RAX)));
+            },
+            _ => {
+                ops.push(Push(RegisterOperand(Register::RAX)));
+                ops.extend(expr.get_ops(var_store));
+                ops.push(Pop(RegisterOperand(Register::RBX)));
+                ops.push(Pop(RegisterOperand(Register::RAX)));
+                ops.push(Add(Register::RAX, RegisterOperand(Register::RBX)));
+            }
         }
-        counter +=1;
+        ops
     }
-    ops.push(Push(RegisterOperand(Register::RAX)));
-    ops
+}
+
+impl Asmable for MultTerm{
+    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
+        let &MultTerm(ref op, ref expr) = self;
+        let mut ops = Vec::new();
+        match *op{
+            MultOp::Start => {
+                ops.extend(expr.get_ops(var_store));
+                ops.push(Pop(RegisterOperand(Register::RAX)));
+            },
+            _ => {
+                ops.push(Push(RegisterOperand(Register::RAX)));
+                ops.extend(expr.get_ops(var_store));
+                ops.push(Pop(RegisterOperand(Register::RBX)));
+                ops.push(Pop(RegisterOperand(Register::RAX)));
+                ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+            }
+        }
+        ops
+    }
 }
 
 use std::collections::HashMap;
@@ -132,17 +135,6 @@ impl VarStore{
     }
 }
 
-fn calculate_expr(expr: &Expr, var_store: &VarStore) -> Vec<AsmOp>{
-    let mut ops = Vec::new();
-    match *expr {
-        Expr::AddSub(ref terms) => ops.extend(add(terms.as_slice(), var_store)),
-        Expr::MultDiv(ref terms) => ops.extend(mult(terms.as_slice(), var_store)),
-        Expr::Num(ref num) => ops.push(Push(Value(*num))),
-        Expr::Variable(ref name) => ops.push(Push(Memory(var_store.get_var_address_r(name)))),
-    }
-    ops
-}
-
 pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
     let mut ops =  AsmProgram::new();
     let mut var_store = VarStore::new();
@@ -150,11 +142,11 @@ pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
         println!("\n{:?}\nIs translated into:", stmt);
         match *stmt {
             Statement::Assign(ref name, ref expr) => {
-                ops.extend(calculate_expr(expr, &var_store));
+                ops.extend(expr.get_ops(&var_store));
                 ops.add(Pop(Memory(var_store.get_var_address_l(name))));
             }
             Statement::Output(ref expr) => {
-                ops.extend(calculate_expr(expr, &var_store));
+                ops.extend(expr.get_ops(&var_store));
                 ops.add(Pop(RegisterOperand(Register::RAX)));
             }
             _ => {}

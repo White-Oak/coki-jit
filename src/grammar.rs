@@ -5,6 +5,7 @@
 pub enum AddOp {
   Add,
   Subtract,
+  Start,
 }
 
 #[derive(Debug)]
@@ -14,6 +15,7 @@ pub enum MultOp {
   Multiply,
   Divide,
   Modulo,
+  Start,
 }
 
 #[derive(Clone)]

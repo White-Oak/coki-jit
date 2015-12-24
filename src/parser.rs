@@ -32,7 +32,7 @@ pub fn program() -> Box<SliceParser<I=[Token], O=Block>> {
         let mult =  {
             let p = factor.clone().then(multop.then(factor).repeat()).map(|(first, seq)| {
                 let mut ops = Vec::new();
-                ops.push(MultTerm(MultOp::Multiply, first));
+                ops.push(MultTerm(MultOp::Start, first));
                 for &(ref op, ref value) in seq.iter() {
                     ops.push(MultTerm(op.clone(), value.clone())); //maybe box the value instead
                 }
@@ -48,7 +48,7 @@ pub fn program() -> Box<SliceParser<I=[Token], O=Block>> {
         let plus = {
             let p = mult.clone().then(addop.then(mult).repeat()).map(|(first, seq)| {
                 let mut ops = Vec::new();
-                    ops.push(AddTerm(AddOp::Add, first));
+                    ops.push(AddTerm(AddOp::Start, first));
                     for &(ref op, ref value) in seq.iter() {
                         ops.push(AddTerm(op.clone(), value.clone()));
                     }
