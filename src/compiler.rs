@@ -16,9 +16,9 @@ impl fmt::Display for Register{
 impl fmt::Display for AsmOperand {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            AsmOperand::RegisterOperand(ref dest) =>  write!(f, "{}\n", dest),
-            AsmOperand::Value(ref dest) => write!(f, "{}\n", dest),
-            AsmOperand::Memory(ref mem) => write!(f, "[{}]\n", mem)
+            AsmOperand::RegisterOperand(ref dest) =>  write!(f, "{}", dest),
+            AsmOperand::Value(ref dest) => write!(f, "{}", dest),
+            AsmOperand::Memory(ref mem) => write!(f, "[{}]", mem)
         }
     }
 }
@@ -27,11 +27,16 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
     let mut str = "use64\n".to_string();
     for op in ops{
         let temp_str = match *op {
-            AsmOp::Add(ref dest, ref operand) => format!("add {}, {}", dest, operand),
-            AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}", dest, operand),
-            AsmOp::Pop(ref dest) => format!("popq {}", dest),
-            AsmOp::Push(ref dest) => format!("pushq {}", dest),
-            AsmOp::Mov(ref dest, ref operand) => format!("mov {}, {}", dest, operand),
+            AsmOp::Add(ref dest, ref operand) => format!("add {}, {}\n", dest, operand),
+            AsmOp::Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
+
+            AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}\n", dest, operand),
+            AsmOp::Div(ref dest, ref operand) => panic!(),
+            AsmOp::Mod(ref dest, ref operand) => panic!(),
+
+            AsmOp::Pop(ref dest) => format!("popq {}\n", dest),
+            AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
+            AsmOp::Mov(ref dest, ref operand) => format!("mov {}, {}\n", dest, operand),
             AsmOp::Out => "ret".to_string() ,
             // _ => {}
         };

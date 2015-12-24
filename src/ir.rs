@@ -73,7 +73,11 @@ impl Asmable for AddTerm{
                 ops.extend(expr.get_ops(var_store));
                 ops.push(Pop(RegisterOperand(Register::RBX)));
                 ops.push(Pop(RegisterOperand(Register::RAX)));
-                ops.push(Add(Register::RAX, RegisterOperand(Register::RBX)));
+                match *op{
+                    AddOp::Add => ops.push(Add(Register::RAX, RegisterOperand(Register::RBX))),
+                    AddOp::Subtract => ops.push(Sub(Register::RAX, RegisterOperand(Register::RBX))),
+                    _ => panic!()
+                }
             }
         }
         ops
@@ -94,7 +98,12 @@ impl Asmable for MultTerm{
                 ops.extend(expr.get_ops(var_store));
                 ops.push(Pop(RegisterOperand(Register::RBX)));
                 ops.push(Pop(RegisterOperand(Register::RAX)));
-                ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+                match *op{
+                    MultOp::Multiply => ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX))),
+                    MultOp::Divide => ops.push(Div(Register::RAX, RegisterOperand(Register::RBX))),
+                    MultOp::Modulo => ops.push(Mod(Register::RAX, RegisterOperand(Register::RBX))),
+                    _ => panic!()
+                }
             }
         }
         ops

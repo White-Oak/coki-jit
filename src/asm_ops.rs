@@ -1,7 +1,12 @@
 #[derive(Debug, Eq, PartialEq)]
 pub enum AsmOp{
     Add(Register, AsmOperand),
+    Sub(Register, AsmOperand),
+
     Mul(Register, AsmOperand),
+    Div(Register, AsmOperand),
+    Mod(Register, AsmOperand),
+
     Mov(Register, AsmOperand),
     Push(AsmOperand),
     Pop(AsmOperand),
