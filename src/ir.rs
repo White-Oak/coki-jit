@@ -118,7 +118,7 @@ impl VarStore{
     }
     fn get_var_address_l(&mut self, name: &String) -> u16{
         if !self.variables.contains_key(name){
-            let result = self.variables.insert(name.to_string(), self.current_address + 100);
+            let result = self.variables.insert(name.to_string(), self.current_address + 500);
             match result{
                 Some(_) => panic!(),
                 None =>{
