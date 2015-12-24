@@ -15,7 +15,7 @@ pub enum AsmOperand{
     Memory(u16),
 }
 
-#[derive(Debug, Eq, PartialEq,)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Register{
     RAX,
     RBX,

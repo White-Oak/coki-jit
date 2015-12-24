@@ -6,35 +6,32 @@ use std::fs::File;
 use std::path::Path;
 use std::process::Command;
 
+use std::fmt;
+impl fmt::Display for Register{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+
+}
+impl fmt::Display for AsmOperand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            AsmOperand::RegisterOperand(ref dest) =>  write!(f, "{}\n", dest),
+            AsmOperand::Value(ref dest) => write!(f, "{}\n", dest),
+            AsmOperand::Memory(ref mem) => write!(f, "[{}]\n", mem)
+        }
+    }
+}
+
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
     let mut str = "use64\n".to_string();
     for op in ops{
         let temp_str = match *op {
-            AsmOp::Add(ref dest, ref operand) => match *operand{
-                AsmOperand::RegisterOperand(ref source) =>  format!("add {:?}, {:?}\n", dest, source),
-                AsmOperand::Value(ref i) => format!("add {:?}, {:?}\n", dest, i),
-                _ => "".to_string()
-            },
-            AsmOp::Mul(ref dest, ref operand) => match *operand{
-                AsmOperand::RegisterOperand(ref source) => format!("imul {:?}, {:?}\n", dest, source),
-                AsmOperand::Value(ref i) => format!("imul {:?}, {:?}\n", dest, i),
-                _ => "".to_string()
-            },
-            AsmOp::Pop(ref dest) => match *dest {
-                AsmOperand::RegisterOperand(ref dest) =>  format!("popq {:?}\n", dest),
-                AsmOperand::Value(ref dest) => format!("popq {:?}\n", dest),
-                AsmOperand::Memory(ref mem) => format!("popq [{}]\n", mem)
-            },
-            AsmOp::Push(ref dest) => match *dest {
-                AsmOperand::RegisterOperand(ref dest) => format!("pushq {:?}\n", dest),
-                AsmOperand::Value(ref dest) => format!("pushq {:?}\n", dest),
-                AsmOperand::Memory(ref mem) => format!("pushq [{}]\n", mem)
-            },
-            AsmOp::Mov(ref dest, ref operand) => match *operand{
-                AsmOperand::RegisterOperand(ref source) => format!("mov {:?}, {:?}\n", dest, source),
-                AsmOperand::Value(ref i) => format!("mov {:?}, {:?}\n", dest, i),
-                AsmOperand::Memory(ref i) => format!("mov {:?}, [{:?}]\n", dest, i),
-            },
+            AsmOp::Add(ref dest, ref operand) => format!("add {}, {}", dest, operand),
+            AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}", dest, operand),
+            AsmOp::Pop(ref dest) => format!("popq {}", dest),
+            AsmOp::Push(ref dest) => format!("pushq {}", dest),
+            AsmOp::Mov(ref dest, ref operand) => format!("mov {}, {}", dest, operand),
             AsmOp::Out => "ret".to_string() ,
             // _ => {}
         };
