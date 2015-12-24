@@ -21,13 +21,13 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
                 _ => "".to_string()
             },
             AsmOp::Pop(ref dest) => match *dest {
-                AsmOperand::RegisterOperand(ref dest) =>  format!("pop {:?}\n", dest),
-                AsmOperand::Value(ref dest) => format!("pop {:?}\n", dest),
+                AsmOperand::RegisterOperand(ref dest) =>  format!("popq {:?}\n", dest),
+                AsmOperand::Value(ref dest) => format!("popq {:?}\n", dest),
                 AsmOperand::Memory(ref mem) => format!("popq [{}]\n", mem)
             },
             AsmOp::Push(ref dest) => match *dest {
-                AsmOperand::RegisterOperand(ref dest) => format!("push {:?}\n", dest),
-                AsmOperand::Value(ref dest) => format!("push {:?}\n", dest),
+                AsmOperand::RegisterOperand(ref dest) => format!("pushq {:?}\n", dest),
+                AsmOperand::Value(ref dest) => format!("pushq {:?}\n", dest),
                 AsmOperand::Memory(ref mem) => format!("pushq [{}]\n", mem)
             },
             AsmOp::Mov(ref dest, ref operand) => match *operand{
