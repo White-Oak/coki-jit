@@ -1,18 +1,3 @@
-*.swo
-*.swp
-*.cache
-*.classpath
-*.project
-*.settings
-*.metadata
-*.iml
 *.lock
 
-project/target/
-project/project/
 target/
-xenu/project
-xenu/target
-colossus/project/
-colossus/target/
-.idea/

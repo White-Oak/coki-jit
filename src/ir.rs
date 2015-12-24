@@ -26,30 +26,30 @@ impl Extend<AsmOp> for AsmProgram {
     }
 }
 
-fn move_into_expr(expr: &Expr, var_store: &mut VarStore) -> Vec<AsmOp>{
-let mut ops = Vec::new();
-        match *expr {
-            Expr::Num(ref num) => ops.push(Add(Register::RAX, Value(*num))),
-            Expr::AddSub(ref terms)  => {
-                ops.push(Push(RegisterOperand(Register::RAX)));
-                ops.extend(add(terms.as_slice(), var_store));
-                ops.push(Pop(RegisterOperand(Register::RBX)));
-                ops.push(Pop(RegisterOperand(Register::RAX)));
-                ops.push(Add(Register::RAX, RegisterOperand(Register::RBX)));
-            },
-            Expr::MultDiv(ref terms) => {
-                ops.push(Push(RegisterOperand(Register::RAX)));
-                ops.extend(mult(terms.as_slice(), var_store));
-                ops.push(Pop(RegisterOperand(Register::RBX)));
-                ops.push(Pop(RegisterOperand(Register::RAX)));
-                ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)));
-            },
-            Expr::Variable(ref name) => ops.push(Add(Register::RAX, Memory(var_store.get_var_address(name))))
-        }
+fn move_into_expr(expr: &Expr, var_store: &VarStore) -> Vec<AsmOp>{
+    let mut ops = Vec::new();
+    match *expr {
+        Expr::Num(ref num) => ops.push(Add(Register::RAX, Value(*num))),
+        Expr::AddSub(ref terms)  => {
+            ops.push(Push(RegisterOperand(Register::RAX)));
+            ops.extend(add(terms.as_slice(), var_store));
+            ops.push(Pop(RegisterOperand(Register::RBX)));
+            ops.push(Pop(RegisterOperand(Register::RAX)));
+            ops.push(Add(Register::RAX, RegisterOperand(Register::RBX)));
+        },
+        Expr::MultDiv(ref terms) => {
+            ops.push(Push(RegisterOperand(Register::RAX)));
+            ops.extend(mult(terms.as_slice(), var_store));
+            ops.push(Pop(RegisterOperand(Register::RBX)));
+            ops.push(Pop(RegisterOperand(Register::RAX)));
+            ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)));
+        },
+        Expr::Variable(ref name) => ops.push(Add(Register::RAX, Memory(var_store.get_var_address_r(name))))
+    }
     ops
 }
 
-fn move_into_first_term_expr(expr: &Expr, var_store: &mut VarStore) -> Vec<AsmOp>{
+fn move_into_first_term_expr(expr: &Expr, var_store: &VarStore) -> Vec<AsmOp>{
     let mut ops = Vec::new();
     match *expr {
         Expr::Num(ref num) => ops.push(Mov(Register::RAX, Value(*num))),
@@ -61,12 +61,12 @@ fn move_into_first_term_expr(expr: &Expr, var_store: &mut VarStore) -> Vec<AsmOp
             ops.extend(mult(terms.as_slice(), var_store));
             ops.push(Pop(RegisterOperand(Register::RAX)));
         },
-        Expr::Variable(ref name) => ops.push(Mov(Register::RAX, Memory(var_store.get_var_address(name))))
+        Expr::Variable(ref name) => ops.push(Mov(Register::RAX, Memory(var_store.get_var_address_r(name))))
     }
     ops
 }
 
-fn add(terms: &[AddTerm], var_store: &mut VarStore) -> Vec<AsmOp>{
+fn add(terms: &[AddTerm], var_store: &VarStore) -> Vec<AsmOp>{
     let mut ops = Vec::new();
     let mut counter = 0;
     for term in terms {
@@ -82,7 +82,7 @@ fn add(terms: &[AddTerm], var_store: &mut VarStore) -> Vec<AsmOp>{
     ops
 }
 
-fn mult(terms: &[MultTerm], var_store: &mut VarStore) -> Vec<AsmOp>{
+fn mult(terms: &[MultTerm], var_store: &VarStore) -> Vec<AsmOp>{
     let mut ops = Vec::new();
     let mut counter = 0;
     for term in terms {
@@ -107,28 +107,38 @@ struct VarStore{
 
 impl VarStore{
     fn new() -> VarStore{
-        VarStore{variables: HashMap::new(), current_address: 1000}
+        VarStore{variables: HashMap::new(), current_address: 0}
     }
 
-    fn get_var_address(&mut self, name: &String) -> u16{
-        let result = self.variables.insert(name.clone(), self.current_address);
-        match result{
-            Some(address) => address,
-            None =>{
-                self.current_address += 1;
-                self.current_address - 1
+    fn get_var_address_r(&self, name: &String) -> u16{
+        match self.variables.get(name){
+            Some(address) => *address,
+            None => panic!("No variable named {}.", name)
+        }
+    }
+    fn get_var_address_l(&mut self, name: &String) -> u16{
+        if !self.variables.contains_key(name){
+            let result = self.variables.insert(name.to_string(), self.current_address + 100);
+            match result{
+                Some(_) => panic!(),
+                None =>{
+                    self.current_address += 8;
+                    self.get_var_address_r(name)
+                }
             }
+        }else{
+            self.get_var_address_r( name)
         }
     }
 }
 
-fn calculate_expr(expr: &Expr, var_store: &mut VarStore) -> Vec<AsmOp>{
+fn calculate_expr(expr: &Expr, var_store: &VarStore) -> Vec<AsmOp>{
     let mut ops = Vec::new();
     match *expr {
         Expr::AddSub(ref terms) => ops.extend(add(terms.as_slice(), var_store)),
         Expr::MultDiv(ref terms) => ops.extend(mult(terms.as_slice(), var_store)),
         Expr::Num(ref num) => ops.push(Push(Value(*num))),
-        Expr::Variable(ref name) => ops.push(Push(Memory(var_store.get_var_address(name)))),
+        Expr::Variable(ref name) => ops.push(Push(Memory(var_store.get_var_address_r(name)))),
     }
     ops
 }
@@ -140,11 +150,11 @@ pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
         println!("\n{:?}\nIs translated into:", stmt);
         match *stmt {
             Statement::Assign(ref name, ref expr) => {
-                ops.extend(calculate_expr(expr, &mut var_store));
-                ops.add(Pop(Memory(var_store.get_var_address(name))));
+                ops.extend(calculate_expr(expr, &var_store));
+                ops.add(Pop(Memory(var_store.get_var_address_l(name))));
             }
             Statement::Output(ref expr) => {
-                ops.extend(calculate_expr(expr, &mut var_store));
+                ops.extend(calculate_expr(expr, &var_store));
                 ops.add(Pop(RegisterOperand(Register::RAX)));
             }
             _ => {}

@@ -23,12 +23,12 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
             AsmOp::Pop(ref dest) => match *dest {
                 AsmOperand::RegisterOperand(ref dest) =>  format!("pop {:?}\n", dest),
                 AsmOperand::Value(ref dest) => format!("pop {:?}\n", dest),
-                AsmOperand::Memory(ref mem) => format!("popw [{}]\n", mem)
+                AsmOperand::Memory(ref mem) => format!("popq [{}]\n", mem)
             },
             AsmOp::Push(ref dest) => match *dest {
                 AsmOperand::RegisterOperand(ref dest) => format!("push {:?}\n", dest),
                 AsmOperand::Value(ref dest) => format!("push {:?}\n", dest),
-                AsmOperand::Memory(ref mem) => format!("pushw [{}]\n", mem)
+                AsmOperand::Memory(ref mem) => format!("pushq [{}]\n", mem)
             },
             AsmOp::Mov(ref dest, ref operand) => match *operand{
                 AsmOperand::RegisterOperand(ref source) => format!("mov {:?}, {:?}\n", dest, source),
