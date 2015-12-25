@@ -2,6 +2,7 @@ use grammar::*;
 use asm_ops::*;
 use asm_ops::AsmOperand::*;
 use asm_ops::AsmOp::*;
+use asm_ops::Register::*;
 
 struct AsmProgram {
     contents : Vec<AsmOp>
@@ -114,21 +115,30 @@ impl AsmableExpression for MultTerm{
 }
 
 trait AsmableStatement{
-    fn get_ops(&self, mut var_store: &mut VarStore, mut out_store: &mut OutputStore) -> Vec<AsmOp>;
+    fn get_ops(&self, mut env: &mut Environment) -> Vec<AsmOp>;
 }
 
 impl AsmableStatement for Statement{
-    fn get_ops(&self, mut var_store: &mut VarStore, mut out_store: &mut OutputStore) -> Vec<AsmOp>{
+    fn get_ops(&self, mut env: &mut Environment) -> Vec<AsmOp>{
         let mut ops = Vec::new();
         println!("\n{:?}\nIs translated into:", self);
         match *self {
             Statement::Assign(ref name, ref expr) => {
-                ops.extend(expr.get_ops(&var_store));
-                ops.push(Pop(Memory(var_store.get_var_address_l(name))));
+                ops.extend(expr.get_ops(&env.var_store));
+                ops.push(Pop(Memory(env.var_store.get_var_address_l(name))));
             }
             Statement::Output(ref expr) => {
-                ops.extend(expr.get_ops(&var_store));
-                ops.push(Pop(Memory(out_store.get_next_output_adress())));
+                ops.extend(expr.get_ops(&env.var_store));
+                ops.push(Pop(Memory(env.out_store.get_next_output_adress())));
+            },
+            Statement::Loop(ref expr, ref block) =>{
+                ops.extend(expr.get_ops(&env.var_store));
+                ops.push(Pop(RegisterOperand(RCX)));
+
+                let label = env.loopl_store.get_next_loop_label();
+                ops.push(Label(label.clone()));
+                ops.extend(translate_stmts(&block.0, &mut env));
+                ops.push(Loop(label));
             }
             _ => {}
         }
@@ -185,13 +195,42 @@ impl OutputStore{
     }
 }
 
+struct LoopLabelStore(u16);
+
+impl LoopLabelStore{
+    fn new() -> LoopLabelStore{
+        LoopLabelStore(0)
+    }
+    fn get_next_loop_label(&mut self) -> String{
+        let num = self.0;
+        self.0 += 1;
+        format!("label{}", num).to_string()
+    }
+}
+
+struct Environment{
+    var_store: VarStore,
+    out_store: OutputStore,
+    loopl_store: LoopLabelStore
+}
+
+impl Environment{
+    fn new() -> Environment{
+        Environment{var_store: VarStore::new(), out_store: OutputStore::new(), loopl_store: LoopLabelStore::new()}
+    }
+}
+
+fn translate_stmts(block: &Vec<Statement>, mut env: &mut Environment) -> Vec<AsmOp>{
+    let mut ops = Vec::new();
+    for stmt in block {
+        ops.extend(stmt.get_ops(&mut env));
+    }
+    ops
+}
 ///Translates AST into a sequence of asm instructions
 pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
     let mut ops =  AsmProgram::new();
-    let mut var_store = VarStore::new();
-    let mut out_store = OutputStore::new();
-    for stmt in block {
-        ops.extend(stmt.get_ops(&mut var_store, &mut out_store));
-    }
+    let mut env = Environment::new();
+    ops.extend(translate_stmts(block, &mut env));
     Box::new(ops.contents)
 }

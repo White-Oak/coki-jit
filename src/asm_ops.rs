@@ -11,6 +11,9 @@ pub enum AsmOp{
     Push(AsmOperand),
     Pop(AsmOperand),
     Out,
+
+    Label(String),
+    Loop(String)
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -24,4 +27,5 @@ pub enum AsmOperand{
 pub enum Register{
     RAX,
     RBX,
+    RCX,
 }

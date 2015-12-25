@@ -38,6 +38,9 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
             AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
             AsmOp::Mov(ref dest, ref operand) => format!("mov {}, {}\n", dest, operand),
             AsmOp::Out => "ret".to_string() ,
+
+            AsmOp::Label(ref name) => format!("{}:\n", name),
+            AsmOp::Loop(ref name) => format!("loopq {}\n", name)
             // _ => {}
         };
         str = str + &temp_str;
