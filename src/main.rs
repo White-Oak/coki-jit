@@ -63,7 +63,8 @@ fn interp<'a>(raw: &'a str) {
               let ops = translate(&stmts);
               let bytes = compile(&ops);
               let fun = get_jit(bytes);
-              println!("Output:\n{}", fun());
+              println!("Output:");
+              fun();
             }
           }
           Err(err) => {println!("Parse Error: {:?}", err);}

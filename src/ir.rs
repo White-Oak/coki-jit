@@ -114,11 +114,11 @@ impl AsmableExpression for MultTerm{
 }
 
 trait AsmableStatement{
-    fn get_ops(&self, mut var_store: &mut VarStore) -> Vec<AsmOp>;
+    fn get_ops(&self, mut var_store: &mut VarStore, mut out_store: &mut OutputStore) -> Vec<AsmOp>;
 }
 
 impl AsmableStatement for Statement{
-    fn get_ops(&self, mut var_store: &mut VarStore) -> Vec<AsmOp>{
+    fn get_ops(&self, mut var_store: &mut VarStore, mut out_store: &mut OutputStore) -> Vec<AsmOp>{
         let mut ops = Vec::new();
         println!("\n{:?}\nIs translated into:", self);
         match *self {
@@ -128,7 +128,7 @@ impl AsmableStatement for Statement{
             }
             Statement::Output(ref expr) => {
                 ops.extend(expr.get_ops(&var_store));
-                ops.push(Pop(RegisterOperand(Register::RAX)));
+                ops.push(Pop(Memory(out_store.get_next_output_adress())));
             }
             _ => {}
         }
@@ -146,7 +146,7 @@ struct VarStore{
 ///Stores addresses for variables
 impl VarStore{
     fn new() -> VarStore{
-        VarStore{variables: HashMap::new(), current_address: 0}
+        VarStore{variables: HashMap::new(), current_address: 500}
     }
 
     fn get_var_address_r(&self, name: &String) -> u16{
@@ -157,7 +157,7 @@ impl VarStore{
     }
     fn get_var_address_l(&mut self, name: &String) -> u16{
         if !self.variables.contains_key(name){
-            let result = self.variables.insert(name.to_string(), self.current_address + 500);
+            let result = self.variables.insert(name.to_string(), self.current_address);
             match result{
                 Some(_) => panic!(),
                 None =>{
@@ -166,8 +166,22 @@ impl VarStore{
                 }
             }
         }else{
-            self.get_var_address_r( name)
+            self.get_var_address_r(name)
         }
+    }
+}
+
+struct OutputStore(u16);
+
+///Stores adresses for output values
+impl OutputStore{
+    fn get_next_output_adress(&mut self) -> u16{
+        let address = self.0;
+        self.0 += 8;
+        address
+    }
+    fn new() -> OutputStore{
+        OutputStore(1000)
     }
 }
 
@@ -175,8 +189,9 @@ impl VarStore{
 pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
     let mut ops =  AsmProgram::new();
     let mut var_store = VarStore::new();
+    let mut out_store = OutputStore::new();
     for stmt in block {
-        ops.extend(stmt.get_ops(&mut var_store));
+        ops.extend(stmt.get_ops(&mut var_store, &mut out_store));
     }
     Box::new(ops.contents)
 }

@@ -88,11 +88,35 @@ impl IndexMut<usize> for JitMemory {
     }
 }
 
-pub fn get_jit(bytes: Vec<u8>) -> (fn() -> i64) {
+fn jit_wrap(fun: fn(), jit: &JitMemory){
+    fun();
+    let mut acc: i64 = 0;
+    const DELTA_OUTPUT: usize = 1000;
+    let mut i = 0;
+    loop{
+        let value = jit[i + DELTA_OUTPUT] as i64;
+        acc += value << ((i % 8) * 8);
+        // println!("{} as byte: {}", (i + DELTA_OUTPUT), value);
+        if (i + 1) % 8 == 0 {
+            if acc == -4340410370284600381 {
+                break;
+            }
+            println!("{} as qword: {}", ((i - 7) / 8), acc);
+            acc = 0;
+        }
+        i += 1;
+        if i > 1000{
+            break;
+        }
+    }
+}
+
+pub fn get_jit(bytes: Vec<u8>) -> Box<Fn()> {
     let mut jit : JitMemory = JitMemory::new(1);
     for byte in bytes{
         jit.add(byte);
     }
-    println!("Program loaded into the memory"); 
-    unsafe { mem::transmute(jit.contents) }
+    println!("Program loaded into the memory");
+    let fun = unsafe { mem::transmute(jit.contents) };
+    Box::new(move || jit_wrap(fun, &jit))
 }
