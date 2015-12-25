@@ -7,6 +7,8 @@ struct AsmProgram {
     contents : Vec<AsmOp>
 }
 
+///A wrapper on Vec<AsmOp>
+///Prints every addition for debugging purposes
 impl AsmProgram{
     fn add(&mut self, op: AsmOp){
         println!("{:?}", &op);
@@ -26,11 +28,12 @@ impl Extend<AsmOp> for AsmProgram {
     }
 }
 
-trait Asmable{
+///Indicates that a struct can be translated into IR code
+trait AsmableExpression{
     fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>;
 }
 
-impl Asmable for Expr{
+impl AsmableExpression for Expr{
     fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
         let mut ops = Vec::new();
         fn add(terms: &[AddTerm], var_store: &VarStore) -> Vec<AsmOp>{
@@ -59,7 +62,7 @@ impl Asmable for Expr{
     }
 }
 
-impl Asmable for AddTerm{
+impl AsmableExpression for AddTerm{
     fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
         let &AddTerm(ref op, ref expr) = self;
         let mut ops = Vec::new();
@@ -84,7 +87,7 @@ impl Asmable for AddTerm{
     }
 }
 
-impl Asmable for MultTerm{
+impl AsmableExpression for MultTerm{
     fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
         let &MultTerm(ref op, ref expr) = self;
         let mut ops = Vec::new();
@@ -110,6 +113,29 @@ impl Asmable for MultTerm{
     }
 }
 
+trait AsmableStatement{
+    fn get_ops(&self, mut var_store: &mut VarStore) -> Vec<AsmOp>;
+}
+
+impl AsmableStatement for Statement{
+    fn get_ops(&self, mut var_store: &mut VarStore) -> Vec<AsmOp>{
+        let mut ops = Vec::new();
+        println!("\n{:?}\nIs translated into:", self);
+        match *self {
+            Statement::Assign(ref name, ref expr) => {
+                ops.extend(expr.get_ops(&var_store));
+                ops.push(Pop(Memory(var_store.get_var_address_l(name))));
+            }
+            Statement::Output(ref expr) => {
+                ops.extend(expr.get_ops(&var_store));
+                ops.push(Pop(RegisterOperand(Register::RAX)));
+            }
+            _ => {}
+        }
+        ops
+    }
+}
+
 use std::collections::HashMap;
 
 struct VarStore{
@@ -117,6 +143,7 @@ struct VarStore{
     current_address: u16
 }
 
+///Stores addresses for variables
 impl VarStore{
     fn new() -> VarStore{
         VarStore{variables: HashMap::new(), current_address: 0}
@@ -144,22 +171,12 @@ impl VarStore{
     }
 }
 
+///Translates AST into a sequence of asm instructions
 pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
     let mut ops =  AsmProgram::new();
     let mut var_store = VarStore::new();
     for stmt in block {
-        println!("\n{:?}\nIs translated into:", stmt);
-        match *stmt {
-            Statement::Assign(ref name, ref expr) => {
-                ops.extend(expr.get_ops(&var_store));
-                ops.add(Pop(Memory(var_store.get_var_address_l(name))));
-            }
-            Statement::Output(ref expr) => {
-                ops.extend(expr.get_ops(&var_store));
-                ops.add(Pop(RegisterOperand(Register::RAX)));
-            }
-            _ => {}
-        }
+        ops.extend(stmt.get_ops(&mut var_store));
     }
     Box::new(ops.contents)
 }
