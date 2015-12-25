@@ -31,8 +31,8 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
             AsmOp::Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
 
             AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}\n", dest, operand),
-            AsmOp::Div(ref dest, ref operand) => panic!(),
-            AsmOp::Mod(ref dest, ref operand) => panic!(),
+            AsmOp::Div(_, _) => panic!(),
+            AsmOp::Mod(_, _) => panic!(),
 
             AsmOp::Pop(ref dest) => format!("popq {}\n", dest),
             AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
