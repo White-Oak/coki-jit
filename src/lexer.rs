@@ -23,7 +23,7 @@ pub fn token() -> Box<SliceParser<I=str, O=Vec<Token>>> {
     lt("if",          Token::IfKeyword),
     lt("else",        Token::ElseKeyword),
     lt("while",       Token::WhileKeyword),
-    lt("loop",       Token::WhileKeyword),
+    lt("loop",       Token::LoopKeyword),
     lt(r"\r?\n\s*",   Token::NewLine),
     lt(r"\(\s*",      Token::OpenParen),
     lt(r"\)",         Token::CloseParen),
