@@ -22,5 +22,6 @@ pub enum Token {
   IfKeyword,
   ElseKeyword,
   WhileKeyword,
+  LoopKeyword,
   Cmp(Comparator),
 }

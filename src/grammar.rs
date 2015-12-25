@@ -53,6 +53,7 @@ pub enum Statement {
   Output(Expr),
   If(Expr, Comparator, Expr, Block, Option<Block>),
   While(Expr, Comparator, Expr, Block),
+  Loop(Expr, Block),
 }
 
 #[derive(Debug)]

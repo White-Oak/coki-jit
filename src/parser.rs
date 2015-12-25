@@ -125,9 +125,18 @@ pub fn program() -> Box<SliceParser<I=[Token], O=Block>> {
             boxed(Box::new(p))
         };
 
+        let loop_stmt = {
+            let p = lit(Token::LoopKeyword)
+            .then_r(recursive(expression))
+            .then_l(lit(Token::OpenBrace))
+            .then(recursive(program))
+            .then_l(lit(Token::CloseBrace))
+            .map(|(l, block)| Statement::Loop(l, block));
+            boxed(Box::new(p))
+        };
         let output = boxed(Box::new(lit(Token::OutputCmd).then_r(recursive(|| expression())).map(|e| Statement::Output(e))));
 
-        let statements = one_of(vec![assignment, output, boxed(if_stmt()), while_stmt]).then_l(lit(Token::NewLine)).repeat();
+        let statements = one_of(vec![assignment, output, boxed(if_stmt()), while_stmt, loop_stmt]).then_l(lit(Token::NewLine)).repeat();
 
         Box::new(statements.map(|v| Block(v)))
     }
