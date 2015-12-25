@@ -8,7 +8,6 @@ extern crate peruse;
 //#[test]
 //use test::Bencher;
 
-use std::collections::HashMap;
 use grammar::*;
 use parser::program;
 use lexer::token;
@@ -43,8 +42,6 @@ fn main() {
   interp(contents.as_str());
 
 }
-
-type Environment = HashMap<String,i32>;
 
 fn interp<'a>(raw: &'a str) {
   let lexer = token();
