@@ -50,7 +50,8 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
             AsmOp::Loop(ref name) => {
                 block_counter -= 1;
                 format!("\rloopq {}\n", name)
-            }
+            },
+            _ => "\r".to_string()
             // _ => {}
         };
         str = str + &temp_str;

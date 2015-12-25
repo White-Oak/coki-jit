@@ -14,6 +14,7 @@ use lexer::token;
 use ir::translate;
 use compiler::compile;
 use jit::get_jit;
+use optimizer::optimize;
 
 use std::fs::File;
 use std::env::args;
@@ -28,6 +29,7 @@ pub mod ir;
 pub mod asm_ops;
 pub mod compiler;
 pub mod jit;
+pub mod optimizer;
 
 fn main() {
 
@@ -58,7 +60,9 @@ fn interp<'a>(raw: &'a str) {
               println!("Error: unexpected token {:?}", rest[0]);
             } else {
               let ops = translate(&stmts);
-              let bytes = compile(&ops);
+              let _ = compile(&ops);
+              let opt_ops = optimize(*ops);
+              let bytes = compile(&opt_ops);
               let fun = get_jit(bytes);
               println!("Output:");
               fun();

@@ -1,4 +1,4 @@
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum AsmOp{
     Add(Register, AsmOperand),
     Sub(Register, AsmOperand),
@@ -7,23 +7,25 @@ pub enum AsmOp{
     Div(Register, AsmOperand),
     Mod(Register, AsmOperand),
 
-    Mov(Register, AsmOperand),
+    Mov(AsmOperand, AsmOperand),
     Push(AsmOperand),
     Pop(AsmOperand),
     Out,
 
     Label(String),
-    Loop(String)
+    Loop(String),
+    
+    Nop
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum AsmOperand{
     RegisterOperand(Register),
     Value(i32),
     Memory(u16),
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Register{
     RAX,
     RBX,
