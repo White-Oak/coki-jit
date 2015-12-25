@@ -1,19 +1,30 @@
 use asm_ops::*;
+use asm_ops::AsmOp::*;
+use asm_ops::AsmOperand::*;
+
 fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp){
-    match (&op, &previous){
-        //From pop rax; push rbx
-        //To mov rax, rbx
-        (&AsmOp::Pop(ref l), &AsmOp::Push(ref r)) => {
+    //fn remains() -> (AsmOp, AsmOp)
+    match (&previous, &op){
+        //From push rax; pop rbx
+        //To mov rbx, rax
+        (&Push(ref l), &Pop(ref r)) => {
             match (l , r) {
-                (&AsmOperand::Memory(_), &AsmOperand::Memory(_)) =>{
+                (&Memory(_), &Memory(_)) =>{
                     //can't mov [], [] -- skip it on
                     (previous.clone(), op.clone())
                 },
-                (_, _) => {
-                    (AsmOp::Mov(l.clone(), r.clone()), AsmOp::Nop)
-                }
+                (_, _) if l == r => (Nop, Nop),
+                (_, _) => (Mov(r.clone(), l.clone()), Nop),
             }
         },
+        (&Mov(ref before, _), &Push(ref after)) => {
+            match (before, after) {
+                (&RegisterOperand(ref r), &RegisterOperand(ref l)) if r == l => {
+                     (Push(before.clone()), Nop)
+                },
+                (_, _) => (previous.clone(), op.clone())
+            }
+        }
         (_,_) => (previous.clone(), op.clone())
     }
 }

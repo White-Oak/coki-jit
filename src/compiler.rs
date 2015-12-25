@@ -40,7 +40,11 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
 
             AsmOp::Pop(ref dest) => format!("popq {}\n", dest),
             AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
-            AsmOp::Mov(ref dest, ref operand) => format!("mov {}, {}\n", dest, operand),
+            AsmOp::Mov(ref dest, ref operand) => match (dest, operand) {
+                (&AsmOperand::Memory(ref adress), &AsmOperand::Value(ref value)) =>
+                    format!("mov {}, dword {}\nmov [{}], dword 0\n", dest, operand, adress + 4),
+                _ => format!("mov {}, {}\n", dest, operand)
+            },
             AsmOp::Out => "ret".to_string() ,
 
             AsmOp::Label(ref name) => {
