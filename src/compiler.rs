@@ -25,7 +25,11 @@ impl fmt::Display for AsmOperand {
 
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
     let mut str = "use64\n".to_string();
+    let mut block_counter = 0;
     for op in ops{
+        for _ in 0..block_counter{
+            str = str + &"  ";
+        }
         let temp_str = match *op {
             AsmOp::Add(ref dest, ref operand) => format!("add {}, {}\n", dest, operand),
             AsmOp::Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
@@ -39,8 +43,14 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
             AsmOp::Mov(ref dest, ref operand) => format!("mov {}, {}\n", dest, operand),
             AsmOp::Out => "ret".to_string() ,
 
-            AsmOp::Label(ref name) => format!("{}:\n", name),
-            AsmOp::Loop(ref name) => format!("loopq {}\n", name)
+            AsmOp::Label(ref name) => {
+                block_counter += 1;
+                format!("{}:\n", name)
+            },
+            AsmOp::Loop(ref name) => {
+                block_counter -= 1;
+                format!("\rloopq {}\n", name)
+            }
             // _ => {}
         };
         str = str + &temp_str;
