@@ -73,13 +73,13 @@ impl AsmableExpression for AddTerm{
                 ops.push(Pop(RegisterOperand(Register::RAX)));
             },
             _ => {
-                ops.push(Push(RegisterOperand(Register::RAX)));
+                ops.push(Push(RegisterOperand(RAX)));
                 ops.extend(expr.get_ops(var_store));
-                ops.push(Pop(RegisterOperand(Register::RBX)));
-                ops.push(Pop(RegisterOperand(Register::RAX)));
+                ops.push(Pop(RegisterOperand(RBX)));
+                ops.push(Pop(RegisterOperand(RAX)));
                 match *op{
-                    AddOp::Add => ops.push(Add(Register::RAX, RegisterOperand(Register::RBX))),
-                    AddOp::Subtract => ops.push(Sub(Register::RAX, RegisterOperand(Register::RBX))),
+                    AddOp::Add => ops.push(Add(RegisterOperand(RAX), RegisterOperand(RBX))),
+                    AddOp::Subtract => ops.push(Sub(RAX, RegisterOperand(RBX))),
                     _ => panic!()
                 }
             }
@@ -127,8 +127,13 @@ impl AsmableStatement for Statement{
                 program.add(Pop(Memory(env.var_store.get_var_address_l(name))));
             }
             Statement::Output(ref expr) => {
+                /*
+                    popq [r8+1000]
+                    add r8, 8
+                */
                 program.extend(expr.get_ops(&env.var_store));
-                program.add(Pop(Memory(env.out_store.get_next_output_adress())));
+                program.add(Pop(MemoryRegister(R8)));
+                program.add(Add(RegisterOperand(R8), Value(8)));
             },
             Statement::Loop(ref expr, ref block) =>{
                 program.extend(expr.get_ops(&env.var_store));
@@ -179,20 +184,6 @@ impl VarStore{
     }
 }
 
-struct OutputStore(u16);
-
-///Stores adresses for output values
-impl OutputStore{
-    fn get_next_output_adress(&mut self) -> u16{
-        let address = self.0;
-        self.0 += 8;
-        address
-    }
-    fn new() -> OutputStore{
-        OutputStore(1000)
-    }
-}
-
 struct LoopLabelStore(u16);
 
 impl LoopLabelStore{
@@ -208,13 +199,12 @@ impl LoopLabelStore{
 
 struct Environment{
     var_store: VarStore,
-    out_store: OutputStore,
     loopl_store: LoopLabelStore
 }
 
 impl Environment{
     fn new() -> Environment{
-        Environment{var_store: VarStore::new(), out_store: OutputStore::new(), loopl_store: LoopLabelStore::new()}
+        Environment{var_store: VarStore::new(), loopl_store: LoopLabelStore::new()}
     }
 }
 

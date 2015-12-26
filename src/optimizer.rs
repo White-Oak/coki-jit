@@ -9,7 +9,9 @@ fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp){
         //To mov rbx, rax
         (&Push(ref l), &Pop(ref r)) => {
             match (l , r) {
-                (&Memory(_), &Memory(_)) => (previous.clone(), op.clone()), //can't mov [], [] -- skip it on
+                (&Memory(_), &Memory(_)) | (&MemoryRegister(_), &MemoryRegister(_)) |
+                 (&Memory(_), &MemoryRegister(_)) | (&MemoryRegister(_), &Memory(_)) =>
+                    (previous.clone(), op.clone()), //can't mov [], [] -- skip it on
                 _ if l == r => (Nop, Nop), // push rax; pop rax
                 _ => (Mov(r.clone(), l.clone()), Nop),
             }

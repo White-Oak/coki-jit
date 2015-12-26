@@ -18,20 +18,25 @@ impl fmt::Display for AsmOperand {
         match *self {
             AsmOperand::RegisterOperand(ref dest) =>  write!(f, "{}", dest),
             AsmOperand::Value(ref dest) => write!(f, "{}", dest),
-            AsmOperand::Memory(ref mem) => write!(f, "[{}]", mem)
+            AsmOperand::Memory(ref mem) => write!(f, "[{}]", mem),
+            AsmOperand::MemoryRegister(ref mem) => write!(f, "[{}]", mem)
         }
     }
 }
 
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
-    let mut str = "use64\n".to_string();
+    let mut str = "use64\nlea r8, [rip]\nsub r8, 7\nadd r8, 1000\n".to_string();
     let mut block_counter = 0;
     for op in ops{
         for _ in 0..block_counter{
             str = str + &"  ";
         }
         let temp_str = match *op {
-            AsmOp::Add(ref dest, ref operand) => format!("add {}, {}\n", dest, operand),
+            AsmOp::Add(ref dest, ref operand) =>  match (dest, operand) {
+                (&AsmOperand::Memory(_), &AsmOperand::Value(_)) =>
+                    format!("add {}, dword {}\n", dest, operand),
+                _ => format!("add {}, {}\n", dest, operand)
+            },
             AsmOp::Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
 
             AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}\n", dest, operand),
@@ -41,7 +46,7 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
             AsmOp::Pop(ref dest) => format!("popq {}\n", dest),
             AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
             AsmOp::Mov(ref dest, ref operand) => match (dest, operand) {
-                (&AsmOperand::Memory(ref adress), &AsmOperand::Value(ref value)) =>
+                (&AsmOperand::Memory(ref adress), &AsmOperand::Value(_)) =>
                     format!("mov {}, dword {}\nmov [{}], dword 0\n", dest, operand, adress + 4),
                 _ => format!("mov {}, {}\n", dest, operand)
             },
@@ -99,8 +104,9 @@ fn assemble() {
     }
 }
 
-fn read_bytes() -> Vec<u8>{
+pub fn read_bytes() -> Vec<u8>{
     let path = Path::new("target/temp.bin");
+    // let path = Path::new("test.bin");
     let display = path.display();
 
     let mut file = match File::open(&path) {

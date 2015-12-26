@@ -64,7 +64,12 @@ impl JitMemory {
             contents = _contents as *mut _
         }
 
-        JitMemory { contents: contents, counter: 0 }
+        let mut jit = JitMemory { contents: contents, counter: 0 };
+        for i in 0..8 {
+            jit[1000 + i] = (((1008 as u64) >> (i * 8)) & 0xff) as u8;
+        }
+        print_output(&jit);
+        jit
     }
 
     fn add(&mut self, byte: u8){
@@ -87,9 +92,7 @@ impl IndexMut<usize> for JitMemory {
         unsafe { &mut *self.contents.offset(_index as isize) }
     }
 }
-
-fn jit_wrap(fun: fn(), jit: &JitMemory){
-    fun();
+fn print_output(jit: &JitMemory){
     let mut acc: i64 = 0;
     const DELTA_OUTPUT: usize = 1000;
     let mut i = 0;
@@ -109,6 +112,11 @@ fn jit_wrap(fun: fn(), jit: &JitMemory){
             break;
         }
     }
+}
+fn jit_wrap(fun: fn(), jit: &JitMemory){
+    println!("DEBUG 123");
+    fun();
+    print_output(jit);
 }
 
 pub fn get_jit(bytes: Vec<u8>) -> Box<Fn()> {
