@@ -68,7 +68,6 @@ impl JitMemory {
         for i in 0..8 {
             jit[1000 + i] = (((1008 as u64) >> (i * 8)) & 0xff) as u8;
         }
-        print_output(&jit);
         jit
     }
 
@@ -104,17 +103,13 @@ fn print_output(jit: &JitMemory){
             if acc == -4340410370284600381 {
                 break;
             }
-            println!("\n{} as qword: {}", ((i - 7) / 8), acc);
+            println!(" as qword: {}", acc);
             acc = 0;
         }
         i += 1;
-        if i > 32{
-            break;
-        }
     }
 }
 fn jit_wrap(fun: fn(), jit: &JitMemory){
-    println!("DEBUG 123");
     fun();
     print_output(jit);
 }
