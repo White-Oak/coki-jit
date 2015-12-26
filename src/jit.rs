@@ -65,8 +65,8 @@ impl JitMemory {
         }
 
         let mut jit = JitMemory { contents: contents, counter: 0 };
-        for i in 0..8 {
-            jit[1000 + i] = (((1008 as u64) >> (i * 8)) & 0xff) as u8;
+        for i in 500..1000 {
+            jit[i] = 0;
         }
         jit
     }
