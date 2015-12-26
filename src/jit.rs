@@ -96,16 +96,16 @@ fn jit_wrap(fun: fn(), jit: &JitMemory){
     loop{
         let value = jit[i + DELTA_OUTPUT] as i64;
         acc += value << ((i % 8) * 8);
-        // println!("{} as byte: {}", (i + DELTA_OUTPUT), value);
+        print!("{:x} ", value);
         if (i + 1) % 8 == 0 {
-            if acc == -4340410370284600381 {
-                break;
-            }
-            println!("{} as qword: {}", ((i - 7) / 8), acc);
+            // if acc == -4340410370284600381 {
+            //     break;
+            // }
+            println!("\n{} as qword: {}", ((i - 7) / 8), acc);
             acc = 0;
         }
         i += 1;
-        if i > 1000{
+        if i > 32{
             break;
         }
     }
