@@ -98,9 +98,9 @@ fn jit_wrap(fun: fn(), jit: &JitMemory){
         acc += value << ((i % 8) * 8);
         print!("{:x} ", value);
         if (i + 1) % 8 == 0 {
-            // if acc == -4340410370284600381 {
-            //     break;
-            // }
+            if acc == -4340410370284600381 {
+                break;
+            }
             println!("\n{} as qword: {}", ((i - 7) / 8), acc);
             acc = 0;
         }
