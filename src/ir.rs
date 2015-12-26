@@ -115,34 +115,32 @@ impl AsmableExpression for MultTerm{
 }
 
 trait AsmableStatement{
-    fn get_ops(&self, mut env: &mut Environment) -> Vec<AsmOp>;
+    fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram);
 }
 
 impl AsmableStatement for Statement{
-    fn get_ops(&self, mut env: &mut Environment) -> Vec<AsmOp>{
-        let mut ops = Vec::new();
+    fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram) {
         println!("\n{:?}\nIs translated into:", self);
         match *self {
             Statement::Assign(ref name, ref expr) => {
-                ops.extend(expr.get_ops(&env.var_store));
-                ops.push(Pop(Memory(env.var_store.get_var_address_l(name))));
+                program.extend(expr.get_ops(&env.var_store));
+                program.add(Pop(Memory(env.var_store.get_var_address_l(name))));
             }
             Statement::Output(ref expr) => {
-                ops.extend(expr.get_ops(&env.var_store));
-                ops.push(Pop(Memory(env.out_store.get_next_output_adress())));
+                program.extend(expr.get_ops(&env.var_store));
+                program.add(Pop(Memory(env.out_store.get_next_output_adress())));
             },
             Statement::Loop(ref expr, ref block) =>{
-                ops.extend(expr.get_ops(&env.var_store));
-                ops.push(Pop(RegisterOperand(RCX)));
+                program.extend(expr.get_ops(&env.var_store));
+                program.add(Pop(RegisterOperand(RCX)));
 
                 let label = env.loopl_store.get_next_loop_label();
-                ops.push(Label(label.clone()));
-                ops.extend(translate_stmts(&block.0, &mut env));
-                ops.push(Loop(label));
+                program.add(Label(label.clone()));
+                translate_stmts(&block.0, &mut env, &mut program);
+                program.add(Loop(label));
             }
             _ => {}
         }
-        ops
     }
 }
 
@@ -220,17 +218,15 @@ impl Environment{
     }
 }
 
-fn translate_stmts(block: &Vec<Statement>, mut env: &mut Environment) -> Vec<AsmOp>{
-    let mut ops = Vec::new();
+fn translate_stmts(block: &Vec<Statement>, mut env: &mut Environment, mut program: &mut AsmProgram){
     for stmt in block {
-        ops.extend(stmt.get_ops(&mut env));
+        stmt.get_ops(&mut env, &mut program);
     }
-    ops
 }
 ///Translates AST into a sequence of asm instructions
 pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
     let mut ops =  AsmProgram::new();
     let mut env = Environment::new();
-    ops.extend(translate_stmts(block, &mut env));
+    translate_stmts(block, &mut env, &mut ops);
     Box::new(ops.contents)
 }
