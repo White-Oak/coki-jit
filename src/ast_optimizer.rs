@@ -26,6 +26,30 @@ fn optimize_expr(expr: &Expr) -> Expr{
                 AddSub(terms)
             }
         },
+        &MultDiv(ref _terms) => {
+            let mut terms = Vec::new();
+            let mut accumulator: i32 = 1;
+            for term in _terms{
+                let new_expr_for_term = optimize_expr(&term.1);
+                if let Num(ref value) = new_expr_for_term {
+                    match &term.0{
+                        &MultOp::Multiply | &MultOp::Start => {accumulator *= *value},
+                        &MultOp::Divide => {accumulator /= *value},
+                        _ => {} //What to do with modulo??
+                    }
+                } else {
+                    terms.push(MultTerm(term.0.clone(), new_expr_for_term));
+                }
+            }
+            if terms.len() == 0{
+                Num(accumulator)
+            }else{
+                if accumulator != 1 {
+                    terms.push(MultTerm(MultOp::Multiply, Num(accumulator)));
+                }
+                MultDiv(terms)
+            }
+        },
         _ => expr.clone(),
     }
 }
