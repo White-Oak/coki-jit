@@ -23,6 +23,7 @@ fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp){
         (_,_) => (previous.clone(), op.clone())
     }
 }
+
 pub fn optimize(mut _ops: Vec<AsmOp>, iters: u8) -> Vec<AsmOp>{
     let mut changed = true;
     let mut iterations = 0;
@@ -44,6 +45,6 @@ pub fn optimize(mut _ops: Vec<AsmOp>, iters: u8) -> Vec<AsmOp>{
         _ops = ops;
     }
 
-    println!("It took {} iterations to optimize.", iterations);
+    println!("It took {} iterations to optimize IR code.", iterations);
     _ops
 }
