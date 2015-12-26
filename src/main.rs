@@ -11,6 +11,7 @@ use ir::translate;
 use compiler::compile;
 use jit::get_jit;
 use optimizer::optimize;
+use ast_optimizer::optimize_ast;
 
 use std::fs::File;
 use std::env::args;
@@ -26,6 +27,7 @@ pub mod asm_ops;
 pub mod compiler;
 pub mod jit;
 pub mod optimizer;
+pub mod ast_optimizer;
 
 
 fn main() {
@@ -56,7 +58,8 @@ fn interp<'a>(raw: &'a str, opt: u8) {
                         if rest.len() > 0 {
                             println!("Error: unexpected token {:?}", rest[0]);
                         } else {
-                            let ops = translate(&stmts);
+                            let opt_ast = optimize_ast(stmts, opt);
+                            let ops = translate(&opt_ast);
                             let _ = compile(&ops);
                             let opt_ops = optimize(*ops, opt);
                             let bytes = compile(&opt_ops);
