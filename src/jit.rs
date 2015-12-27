@@ -95,16 +95,21 @@ fn print_output(jit: &JitMemory){
     let mut acc: i64 = 0;
     const DELTA_OUTPUT: usize = 1000;
     let mut i = 0;
+    let mut ret_flag = true;
     loop{
         let value = jit[i + DELTA_OUTPUT] as i64;
         acc += value << ((i % 8) * 8);
+        if value != 0xc3{
+            ret_flag = false; //if all 8 bytes are filled with 'ret'
+        }
         print!("{:x} ", value);
         if (i + 1) % 8 == 0 {
-            if acc == -4340410370284600381 {
-                break;
-            }
             println!(" as qword: {}", acc);
+            if ret_flag {
+                break; //return
+            }
             acc = 0;
+            ret_flag = true;
         }
         i += 1;
     }
