@@ -90,7 +90,7 @@ fn write_asm(str: &String) {
 }
 
 fn assemble() {
-    let output = Command::new("fasm").arg("target/temp.asm").output().unwrap_or_else(|e| {
+    let output = Command::new("./fasm").arg("target/temp.asm").output().unwrap_or_else(|e| {
         panic!("failed to execute process: {}", e)
     });
 
