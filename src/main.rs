@@ -33,15 +33,24 @@ pub mod ast_optimizer;
 fn main() {
     let args: Vec<_> = args().collect();
 
-    let ref file = args[1];
-    let max_optimizations = args[2].parse::<u8>().unwrap();
+    let max_optimizations = if args.len() > 2 {
+        args[2].parse::<u8>().unwrap()
+    } else {
+        100
+    };
+    let ref file = if args.len() > 2 {
+        &args[1] as &str
+    } else {
+        "examples/oka.coki"
+    };
 
     let mut contents = String::new();
-    let mut f = File::open(file.as_str()).unwrap();
+    let mut f = File::open(file).unwrap();
     let _ = f.read_to_string(&mut contents);
 
     interp(contents.as_str(), max_optimizations);
 
+    println!("coki has done the job");
 }
 
 fn interp<'a>(raw: &'a str, opt: u8) {

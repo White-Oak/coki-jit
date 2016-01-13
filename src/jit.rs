@@ -26,6 +26,10 @@ mod memory {
         kernel32::VirtualProtect(addr as *mut ::std::os::raw::c_void, size as u64,
             winapi::winnt::PAGE_EXECUTE_READWRITE, _previous_protect as u32);
     }
+
+    pub unsafe fn free_memory(addr: *mut libc::c_void){
+        libc::free(addr);
+    }
 }
 
 #[cfg(unix)]
@@ -42,6 +46,9 @@ mod memory {
     pub unsafe fn make_executable(addr: *mut libc::c_void, size: libc::size_t) {
         libc::mprotect(addr, size, libc::PROT_EXEC | libc::PROT_READ | libc::PROT_WRITE);
     }
+    pub unsafe fn free_memory(addr: *mut libc::c_void){
+        libc::free(addr);
+    }
 }
 
 const PAGE_SIZE: usize = 4096;
@@ -49,6 +56,12 @@ const PAGE_SIZE: usize = 4096;
 struct JitMemory {
     contents : *mut u8,
     counter: usize
+}
+impl Drop for JitMemory {
+    fn drop(&mut self) {
+        println!("Dropping JIT");
+        unsafe {memory::free_memory(self.contents as *mut libc::c_void);}
+    }
 }
 
 impl JitMemory {
@@ -60,6 +73,8 @@ impl JitMemory {
             memory::make_executable(_contents, size);
 
             memset(_contents, 0xc3, size);  // for now, prepopulate with 'RET'
+
+            //memset(_contents + 500, 0, 500);
 
             contents = _contents as *mut _
         }

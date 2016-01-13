@@ -89,8 +89,14 @@ fn write_asm(str: &String) {
     }
 }
 
+#[cfg(windows)]
+const FASM: &'static str = "./fasm.exe";
+
+#[cfg(unix)]
+const FASM: &'static str = "./fasm";
+
 fn assemble() {
-    let output = Command::new("./fasm").arg("target/temp.asm").output().unwrap_or_else(|e| {
+    let output = Command::new(FASM).arg("target/temp.asm").output().unwrap_or_else(|e| {
         panic!("failed to execute process: {}", e)
     });
 
