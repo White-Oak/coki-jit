@@ -1,0 +1,15 @@
+[package]
+name = "wrapper"
+version = "0.1.0"
+authors = ["White-Oak <lpzhelud@gmail.com>"]
+
+[dependencies]
+jitter = { path = "../jitter" }
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1

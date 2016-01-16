@@ -1,4 +1,5 @@
 use asm_ops::*;
+use jitter::jit::OUTPUT_OFFSET;
 
 use std::error::Error;
 use std::io::prelude::*;
@@ -25,7 +26,7 @@ impl fmt::Display for AsmOperand {
 }
 
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8>{
-    let mut str = "use64\nlea r8, [rip]\nsub r8, 7\nadd r8, 1000\n".to_string();
+    let mut str = format!("use64\nlea r8, [rip]\nsub r8, 7\nadd r8, {}\n", OUTPUT_OFFSET);
     let mut block_counter = 0;
     for op in ops{
         for _ in 0..block_counter{

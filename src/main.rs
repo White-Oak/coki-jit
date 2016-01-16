@@ -3,13 +3,14 @@
 #![feature(convert)]
 extern crate regex;
 extern crate peruse;
+extern crate jitter;
 
 use grammar::*;
 use parser::program;
 use lexer::token;
 use ir::translate;
 use compiler::compile;
-use jit::get_jit;
+use jitter::jit::get_jit;
 use optimizer::optimize;
 use ast_optimizer::optimize_ast;
 
@@ -25,7 +26,6 @@ pub mod parser;
 pub mod ir;
 pub mod asm_ops;
 pub mod compiler;
-pub mod jit;
 pub mod optimizer;
 pub mod ast_optimizer;
 

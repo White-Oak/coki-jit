@@ -3,6 +3,7 @@ use asm_ops::*;
 use asm_ops::AsmOperand::*;
 use asm_ops::AsmOp::*;
 use asm_ops::Register::*;
+use jitter::jit::VARIABLE_OFFSET;
 
 struct AsmProgram {
     contents : Vec<AsmOp>
@@ -128,7 +129,7 @@ impl AsmableStatement for Statement{
             }
             Statement::Output(ref expr) => {
                 /*
-                    popq [r8+1000]
+                    popq [r8]
                     add r8, 8
                 */
                 program.extend(expr.get_ops(&env.var_store));
@@ -159,7 +160,7 @@ struct VarStore{
 ///Stores addresses for variables
 impl VarStore{
     fn new() -> VarStore{
-        VarStore{variables: HashMap::new(), current_address: 500}
+        VarStore{variables: HashMap::new(), current_address: VARIABLE_OFFSET as u16}
     }
 
     fn get_var_address_r(&self, name: &String) -> u16{

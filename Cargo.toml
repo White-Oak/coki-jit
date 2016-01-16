@@ -10,12 +10,4 @@ branch = "no-slice"
 
 [dependencies]
 regex = "0.1.10"
-libc = "0.2.2"
-
-[target.x86_64-pc-windows-gnu.dependencies]
-winapi = "0.2"
-kernel32-sys = "0.2"
-
-[target.i686-pc-windows-gnu.dependencies]
-winapi = "0.2"
-kernel32-sys = "0.2"
+jitter = { path = "jitter" }

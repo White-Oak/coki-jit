@@ -35,19 +35,18 @@ mod memory {
 #[cfg(unix)]
 mod memory {
     extern crate libc;
+    extern crate alloc;
 
-    pub unsafe fn aligned_malloc(size: libc::size_t, alignment: libc::size_t) -> *mut libc::c_void {
-        let mut _contents : *mut libc::c_void = ::std::ptr::null_mut();
-        libc::posix_memalign(&mut _contents, alignment, size);
-
-        _contents
+    pub unsafe fn aligned_malloc(size: usize, alignment: usize) -> *mut u8 {
+        alloc::heap::allocate(size, alignment)
     }
 
     pub unsafe fn make_executable(addr: *mut libc::c_void, size: libc::size_t) {
         libc::mprotect(addr, size, libc::PROT_EXEC | libc::PROT_READ | libc::PROT_WRITE);
     }
-    pub unsafe fn free_memory(addr: *mut libc::c_void){
-        libc::free(addr);
+
+    pub unsafe fn free_memory(addr: *mut u8, size: usize, alignment: usize){
+        alloc::heap::deallocate(addr, size, alignment)
     }
 }
 
@@ -60,30 +59,24 @@ struct JitMemory {
 impl Drop for JitMemory {
     fn drop(&mut self) {
         println!("Dropping JIT");
-        unsafe {memory::free_memory(self.contents as *mut libc::c_void);}
+        unsafe {memory::free_memory(self.contents, PAGE_SIZE, PAGE_SIZE);}
     }
 }
 
 impl JitMemory {
     fn new(num_pages: usize) -> JitMemory {
-        let contents : *mut u8;
-        unsafe {
+        let contents = unsafe {
             let size = num_pages * PAGE_SIZE;
-            let mut _contents : *mut libc::c_void = memory::aligned_malloc(size, PAGE_SIZE);
+            let _contents = memory::aligned_malloc(size, PAGE_SIZE) as *mut libc::c_void;
             memory::make_executable(_contents, size);
 
-            memset(_contents, 0xc3, size);  // for now, prepopulate with 'RET'
+            memset(_contents, 0xc3, size);  //prepopulate with 'RET'
 
-            //memset(_contents + 500, 0, 500);
+            memset(_contents.offset(VARIABLE_OFFSET as isize), 0, VARIABLE_MEMORY_SIZE); //set variable memory area with zeros
+            _contents as *mut u8
+        };
 
-            contents = _contents as *mut _
-        }
-
-        let mut jit = JitMemory { contents: contents, counter: 0 };
-        for i in 500..1000 {
-            jit[i] = 0;
-        }
-        jit
+        JitMemory { contents: contents, counter: 0 }
     }
 
     fn add(&mut self, byte: u8){
@@ -106,13 +99,16 @@ impl IndexMut<usize> for JitMemory {
         unsafe { &mut *self.contents.offset(_index as isize) }
     }
 }
+
+pub const OUTPUT_OFFSET: usize = 2000;
+pub const VARIABLE_OFFSET: usize = 1000;
+pub const VARIABLE_MEMORY_SIZE: usize = 1000;
 fn print_output(jit: &JitMemory){
     let mut acc: i64 = 0;
-    const DELTA_OUTPUT: usize = 1000;
     let mut i = 0;
     let mut ret_flag = true;
     loop{
-        let value = jit[i + DELTA_OUTPUT] as i64;
+        let value = jit[i + OUTPUT_OFFSET] as i64;
         acc += value << ((i % 8) * 8);
         if value != 0xc3{
             ret_flag = false; //if all 8 bytes are filled with 'ret'
@@ -121,7 +117,7 @@ fn print_output(jit: &JitMemory){
         if (i + 1) % 8 == 0 {
             println!(" as qword: {}", acc);
             if ret_flag {
-                break; //return
+                break; //ret
             }
             acc = 0;
             ret_flag = true;
