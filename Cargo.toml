@@ -11,3 +11,4 @@ branch = "no-slice"
 [dependencies]
 regex = "0.1.10"
 jitter = { path = "jitter" }
+getopts = "0.2"
