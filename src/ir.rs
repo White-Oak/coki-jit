@@ -6,24 +6,24 @@ use asm_ops::Register::*;
 use coki_jitter::jit::VARIABLE_OFFSET;
 
 struct AsmProgram {
-    contents : Vec<AsmOp>
+    contents: Vec<AsmOp>,
 }
 
 ///A wrapper on Vec<AsmOp>
 ///Prints every addition for debugging purposes
-impl AsmProgram{
-    fn add(&mut self, op: AsmOp){
+impl AsmProgram {
+    fn add(&mut self, op: AsmOp) {
         println!("{:?}", &op);
         self.contents.push(op);
     }
 
     fn new() -> AsmProgram {
-        AsmProgram {contents: Vec::new()}
+        AsmProgram { contents: Vec::new() }
     }
 }
 
 impl Extend<AsmOp> for AsmProgram {
-    fn extend<T: IntoIterator<Item=AsmOp>>(&mut self, iterable: T) {
+    fn extend<T: IntoIterator<Item = AsmOp>>(&mut self, iterable: T) {
         for elem in iterable {
             self.add(elem);
         }
@@ -35,10 +35,10 @@ trait AsmableExpression{
     fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>;
 }
 
-impl AsmableExpression for Expr{
-    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
+impl AsmableExpression for Expr {
+    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp> {
         let mut ops = Vec::new();
-        fn add(terms: &[AddTerm], var_store: &VarStore) -> Vec<AsmOp>{
+        fn add(terms: &[AddTerm], var_store: &VarStore) -> Vec<AsmOp> {
             let mut ops = Vec::new();
             for term in terms {
                 ops.extend(term.get_ops(var_store));
@@ -46,7 +46,7 @@ impl AsmableExpression for Expr{
             ops.push(Push(RegisterOperand(Register::RAX)));
             ops
         }
-        fn mult(terms: &[MultTerm], var_store: &VarStore) -> Vec<AsmOp>{
+        fn mult(terms: &[MultTerm], var_store: &VarStore) -> Vec<AsmOp> {
             let mut ops = Vec::new();
             for term in terms {
                 ops.extend(term.get_ops(var_store));
@@ -64,24 +64,24 @@ impl AsmableExpression for Expr{
     }
 }
 
-impl AsmableExpression for AddTerm{
-    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
+impl AsmableExpression for AddTerm {
+    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp> {
         let &AddTerm(ref op, ref expr) = self;
         let mut ops = Vec::new();
-        match *op{
+        match *op {
             AddOp::Start => {
                 ops.extend(expr.get_ops(var_store));
                 ops.push(Pop(RegisterOperand(Register::RAX)));
-            },
+            }
             _ => {
                 ops.push(Push(RegisterOperand(RAX)));
                 ops.extend(expr.get_ops(var_store));
                 ops.push(Pop(RegisterOperand(RBX)));
                 ops.push(Pop(RegisterOperand(RAX)));
-                match *op{
+                match *op {
                     AddOp::Add => ops.push(Add(RegisterOperand(RAX), RegisterOperand(RBX))),
                     AddOp::Subtract => ops.push(Sub(RAX, RegisterOperand(RBX))),
-                    _ => panic!()
+                    _ => panic!(),
                 }
             }
         }
@@ -89,25 +89,27 @@ impl AsmableExpression for AddTerm{
     }
 }
 
-impl AsmableExpression for MultTerm{
-    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp>{
+impl AsmableExpression for MultTerm {
+    fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp> {
         let &MultTerm(ref op, ref expr) = self;
         let mut ops = Vec::new();
-        match *op{
+        match *op {
             MultOp::Start => {
                 ops.extend(expr.get_ops(var_store));
                 ops.push(Pop(RegisterOperand(Register::RAX)));
-            },
+            }
             _ => {
                 ops.push(Push(RegisterOperand(Register::RAX)));
                 ops.extend(expr.get_ops(var_store));
                 ops.push(Pop(RegisterOperand(Register::RBX)));
                 ops.push(Pop(RegisterOperand(Register::RAX)));
-                match *op{
-                    MultOp::Multiply => ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX))),
+                match *op {
+                    MultOp::Multiply => {
+                        ops.push(Mul(Register::RAX, RegisterOperand(Register::RBX)))
+                    }
                     MultOp::Divide => ops.push(Div(Register::RAX, RegisterOperand(Register::RBX))),
                     MultOp::Modulo => ops.push(Mod(Register::RAX, RegisterOperand(Register::RBX))),
-                    _ => panic!()
+                    _ => panic!(),
                 }
             }
         }
@@ -119,7 +121,7 @@ trait AsmableStatement{
     fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram);
 }
 
-impl AsmableStatement for Statement{
+impl AsmableStatement for Statement {
     fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram) {
         println!("\n{:?}\nIs translated into:", self);
         match *self {
@@ -128,15 +130,14 @@ impl AsmableStatement for Statement{
                 program.add(Pop(Memory(env.var_store.get_var_address_l(name))));
             }
             Statement::Output(ref expr) => {
-                /*
-                    popq [r8]
-                    add r8, 8
-                */
+                // popq [r8]
+                // add r8, 8
+                //
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(MemoryRegister(R8)));
                 program.add(Add(RegisterOperand(R8), Value(8)));
-            },
-            Statement::Loop(ref expr, ref block) =>{
+            }
+            Statement::Loop(ref expr, ref block) => {
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(RegisterOperand(RCX)));
 
@@ -152,34 +153,37 @@ impl AsmableStatement for Statement{
 
 use std::collections::HashMap;
 
-struct VarStore{
+struct VarStore {
     variables: HashMap<String, u16>,
-    current_address: u16
+    current_address: u16,
 }
 
 ///Stores addresses for variables
-impl VarStore{
-    fn new() -> VarStore{
-        VarStore{variables: HashMap::new(), current_address: VARIABLE_OFFSET as u16}
-    }
-
-    fn get_var_address_r(&self, name: &String) -> u16{
-        match self.variables.get(name){
-            Some(address) => *address,
-            None => panic!("No variable named {}.", name)
+impl VarStore {
+    fn new() -> VarStore {
+        VarStore {
+            variables: HashMap::new(),
+            current_address: VARIABLE_OFFSET as u16,
         }
     }
-    fn get_var_address_l(&mut self, name: &String) -> u16{
-        if !self.variables.contains_key(name){
+
+    fn get_var_address_r(&self, name: &String) -> u16 {
+        match self.variables.get(name) {
+            Some(address) => *address,
+            None => panic!("No variable named {}.", name),
+        }
+    }
+    fn get_var_address_l(&mut self, name: &String) -> u16 {
+        if !self.variables.contains_key(name) {
             let result = self.variables.insert(name.to_string(), self.current_address);
-            match result{
+            match result {
                 Some(_) => panic!(),
-                None =>{
+                None => {
                     self.current_address += 8;
                     self.get_var_address_r(name)
                 }
             }
-        }else{
+        } else {
             self.get_var_address_r(name)
         }
     }
@@ -187,36 +191,41 @@ impl VarStore{
 
 struct LoopLabelStore(u16);
 
-impl LoopLabelStore{
-    fn new() -> LoopLabelStore{
+impl LoopLabelStore {
+    fn new() -> LoopLabelStore {
         LoopLabelStore(0)
     }
-    fn get_next_loop_label(&mut self) -> String{
+    fn get_next_loop_label(&mut self) -> String {
         let num = self.0;
         self.0 += 1;
         format!("label{}", num).to_string()
     }
 }
 
-struct Environment{
+struct Environment {
     var_store: VarStore,
-    loopl_store: LoopLabelStore
+    loopl_store: LoopLabelStore,
 }
 
-impl Environment{
-    fn new() -> Environment{
-        Environment{var_store: VarStore::new(), loopl_store: LoopLabelStore::new()}
+impl Environment {
+    fn new() -> Environment {
+        Environment {
+            var_store: VarStore::new(),
+            loopl_store: LoopLabelStore::new(),
+        }
     }
 }
 
-fn translate_stmts(block: &Vec<Statement>, mut env: &mut Environment, mut program: &mut AsmProgram){
+fn translate_stmts(block: &Vec<Statement>,
+                   mut env: &mut Environment,
+                   mut program: &mut AsmProgram) {
     for stmt in block {
         stmt.get_ops(&mut env, &mut program);
     }
 }
 ///Translates AST into a sequence of asm instructions
-pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>>{
-    let mut ops =  AsmProgram::new();
+pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>> {
+    let mut ops = AsmProgram::new();
     let mut env = Environment::new();
     translate_stmts(block, &mut env, &mut ops);
     Box::new(ops.contents)

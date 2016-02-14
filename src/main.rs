@@ -2,7 +2,8 @@
 #![feature(unboxed_closures)]
 extern crate coki_jitter;
 extern crate coki_parser;
-#[macro_use] extern crate clap;
+#[macro_use]
+extern crate clap;
 
 use coki_parser::{parse, Block};
 use ir::translate;
@@ -41,15 +42,15 @@ fn main() {
 fn interp<'a>(raw: &'a str, opt: u8) {
     match parse(raw) {
         Ok(Block(stmts)) => {
-                let opt_ast = optimize_ast(stmts, opt);
-                let ops = translate(&opt_ast);
-                let _ = compile(&ops);
-                let opt_ops = optimize(*ops, opt);
-                let bytes = compile(&opt_ops);
-                let fun = get_jit(bytes);
-                println!("Output:");
-                fun();
+            let opt_ast = optimize_ast(stmts, opt);
+            let ops = translate(&opt_ast);
+            let _ = compile(&ops);
+            let opt_ops = optimize(*ops, opt);
+            let bytes = compile(&opt_ops);
+            let fun = get_jit(bytes);
+            println!("Output:");
+            fun();
         }
-        Err(err) => panic!("Parse Error: {:?}", err)
+        Err(err) => panic!("Parse Error: {:?}", err),
     }
 }

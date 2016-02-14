@@ -1,5 +1,5 @@
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum AsmOp{
+pub enum AsmOp {
     Add(AsmOperand, AsmOperand),
     Sub(Register, AsmOperand),
 
@@ -15,11 +15,11 @@ pub enum AsmOp{
     Label(String),
     Loop(String),
 
-    Nop
+    Nop,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum AsmOperand{
+pub enum AsmOperand {
     RegisterOperand(Register),
     Value(i32),
     Memory(u16),
@@ -27,7 +27,7 @@ pub enum AsmOperand{
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum Register{
+pub enum Register {
     RAX,
     RBX,
     RCX,

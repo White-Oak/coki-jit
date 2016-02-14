@@ -24,12 +24,10 @@ pub fn parse<'a>(raw: &'a str) -> Result<Block, String> {
                             Ok(block)
                         }
                     }
-                    Err(err) => Err(format!("Parser error: {:?}", err))
+                    Err(err) => Err(format!("Parser error: {:?}", err)),
                 }
             }
-        },
-        Err(err) => {
-            Err(format!("Lexer error: {:?}", err))
         }
+        Err(err) => Err(format!("Lexer error: {:?}", err)),
     }
 }
