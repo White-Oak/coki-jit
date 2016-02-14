@@ -1,10 +1,10 @@
 [package]
-name = "wrapper"
+name = "coki_wrapper"
 version = "0.1.0"
 authors = ["White-Oak <lpzhelud@gmail.com>"]
 
 [dependencies]
-jitter = { path = "../jitter" }
+coki_jitter = { path = "../jitter" }
 
 [profile.release]
 opt-level = 3

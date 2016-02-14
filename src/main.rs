@@ -34,22 +34,25 @@ fn main() {
     let mut f = File::open(file).unwrap();
     let _ = f.read_to_string(&mut contents);
 
-    interp(contents.as_str(), max_optimizations);
-
+    let bytes = interp(contents.as_str(), max_optimizations);
+    if !matches.is_present("bin") {
+        run(&bytes);
+    }
     println!("coki has done the job");
 }
-
-fn interp<'a>(raw: &'a str, opt: u8) {
+fn run(bytes: &[u8]) {
+    let fun = get_jit(bytes);
+    println!("Output:");
+    fun();
+}
+fn interp<'a>(raw: &'a str, opt: u8) -> Vec<u8> {
     match parse(raw) {
         Ok(Block(stmts)) => {
             let opt_ast = optimize_ast(stmts, opt);
             let ops = translate(&opt_ast);
             let _ = compile(&ops);
             let opt_ops = optimize(*ops, opt);
-            let bytes = compile(&opt_ops);
-            let fun = get_jit(bytes);
-            println!("Output:");
-            fun();
+            compile(&opt_ops)
         }
         Err(err) => panic!("Parse Error: {:?}", err),
     }

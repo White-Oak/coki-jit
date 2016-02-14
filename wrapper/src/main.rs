@@ -1,7 +1,7 @@
-extern crate jitter;
+extern crate coki_jitter;
 
-use jitter::jit::get_jit;
-fn main(){
-    let fun = get_jit(include_bytes!("../target/temp.bin").iter().cloned().collect());
+use coki_jitter::jit::get_jit;
+pub fn main() {
+    let fun = get_jit(include_bytes!("../temp.bin"));
     fun();
 }

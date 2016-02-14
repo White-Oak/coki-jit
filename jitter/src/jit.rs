@@ -141,9 +141,9 @@ fn jit_wrap(fun: fn(), jit: &JitMemory) {
     print_output(jit);
 }
 
-pub fn get_jit(bytes: Vec<u8>) -> Box<Fn()> {
+pub fn get_jit(bytes: &[u8]) -> Box<Fn()> {
     let mut jit: JitMemory = JitMemory::new(1);
-    for byte in bytes {
+    for &byte in bytes {
         jit.add(byte);
     }
     println!("Program loaded into the memory");
