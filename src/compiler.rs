@@ -1,5 +1,5 @@
 use asm_ops::*;
-use coki_jitter::jit::OUTPUT_OFFSET;
+use coki_jitter::jit::{OUTPUT_OFFSET, PRINT_FUNCTION};
 
 use std::error::Error;
 use std::io::prelude::*;
@@ -13,35 +13,23 @@ impl fmt::Display for Register {
         write!(f, "{:?}", self)
     }
 }
-impl fmt::Display for AsmOperand {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            AsmOperand::RegisterOperand(ref dest) => write!(f, "{}", dest),
-            AsmOperand::Value(ref dest) => write!(f, "{}", dest),
-            AsmOperand::Memory(ref mem) => write!(f, "[{}]", mem),
-            AsmOperand::MemoryRegister(ref mem) => write!(f, "[{}]", mem),
-        }
-    }
-}
 
-pub unsafe extern "fastcall" fn do_it(a: &u64){
-    use libc::{c_void, write};
-    let ptr: *const c_void = a as *const _ as *const c_void;
-    write(1, ptr, 8);
-}
-
-extern crate winapi;
-extern crate kernel32;
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8> {
-    let mut str = format!("use64\nlea r8, [rip]\nsub r8, 7\nadd r8, {}\n",
-                          OUTPUT_OFFSET);
+    let mut string = format!(
+r"use64
+lea r8, [rip]
+sub r8, 7
+add r8, {}
+include 'proc64.inc'
+print =  {:?}
+", OUTPUT_OFFSET, PRINT_FUNCTION);
     let mut block_counter = 0;
     for op in ops {
         for _ in 0..block_counter {
-            str = str + &"  ";
+            string = string + &"  ";
         }
-        let temp_str = match *op {
-            AsmOp::Add(ref dest, ref operand) => {
+        let temp_str = match op {
+            &AsmOp::Add(ref dest, ref operand) => {
                 match (dest, operand) {
                     (&AsmOperand::Memory(_), &AsmOperand::Value(_)) => {
                         format!("add {}, dword {}\n", dest, operand)
@@ -49,76 +37,38 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8> {
                     _ => format!("add {}, {}\n", dest, operand),
                 }
             }
-            AsmOp::Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
+            &AsmOp::Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
 
-            AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}\n", dest, operand),
-            AsmOp::Div(_, _) => panic!(),
-            AsmOp::Mod(_, _) => panic!(),
+            &AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}\n", dest, operand),
+            &AsmOp::Div(_, _) => panic!(),
+            &AsmOp::Mod(_, _) => panic!(),
 
-            AsmOp::Pop(ref dest) => format!("popq {}\n", dest),
-            AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
-            AsmOp::Mov(ref dest, ref operand) => {
+            &AsmOp::Pop(ref dest) => format!("popq {}\n", dest),
+            &AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
+            &AsmOp::Mov(ref dest, ref operand) => {
                 match (dest, operand) {
                     (&AsmOperand::Memory(_), &AsmOperand::Value(_)) => {
                         format!("mov {}, dword {}\n", dest, operand)
                     }
                     _ => format!("mov {}, {}\n", dest, operand),
                 }
-            }
-            AsmOp::Out => "ret".to_string(),
-
-            AsmOp::Label(ref name) => {
+            },
+            &AsmOp::Label(ref name) => {
                 block_counter += 1;
                 format!("{}:\n", name)
             }
-            AsmOp::Loop(ref name) => {
+            &AsmOp::Loop(ref name) => {
                 block_counter -= 1;
                 format!("\rloopq {}\n", name)
             }
-            _ => "\r".to_string(),
-            // _ => {}
+            _ => format!("{}", op),
         };
-        str = str + &temp_str;
+        string = string + &temp_str;
     }
-    println!("\nOutput assembly is:\n{}\n", str);
-    unsafe {
-        let hmod = kernel32::GetModuleHandleA("kernel32.dll".as_ptr() as *const i8);
-        let getstd = kernel32::GetProcAddress(hmod, "GetStdHandle".as_ptr()  as *const i8);
-        let write = kernel32::GetProcAddress(hmod, "WriteConsoleA".as_ptr()  as *const i8);
-        let fun_ptr = do_it as *const u8;
-        let string = format!(r"use64
-        lea r10, [rip]
-        sub r10, 7
-        add r10, 2000
-        include 'proc64.inc'
-
-
-        mov [r10], byte 50
-        mov [r10 + 1], byte 50
-        mov r11, {:?}
-        fastcall r11, r10
-    ", fun_ptr);
-        // let string = format!(r"use64
-        // lea r10, [rip]
-        // sub r10, 7
-        // add r10, 2000
-        // include 'include/win64a.inc'
-        //
-        // mov [r10], byte 50
-        // mov [r10 + 1], byte 50
-        //
-        // mov r11, {:?}
-        // fastcall r11, -11
-        //
-        // mov r11, {:?}
-        // fastcall r11, rax, r10, 2, 0, 0
-        // ret
-        // ", getstd, write );
-        println!("{}", string);
-        write_asm(&string);
-        assemble();
-        read_bytes()
-    }
+    println!("\nOutput assembly is:\n{}\n", string);
+    write_asm(&string);
+    assemble();
+    read_bytes()
 }
 
 fn write_asm(str: &String) {

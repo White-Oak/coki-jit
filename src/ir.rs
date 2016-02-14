@@ -130,12 +130,12 @@ impl AsmableStatement for Statement {
                 program.add(Pop(Memory(env.var_store.get_var_address_l(name))));
             }
             Statement::Output(ref expr) => {
-                // popq [r8]
-                // add r8, 8
+                // popq [r15]
+                // out
                 //
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(MemoryRegister(R8)));
-                program.add(Add(RegisterOperand(R8), Value(8)));
+                program.add(Out);
             }
             Statement::Loop(ref expr, ref block) => {
                 program.extend(expr.get_ops(&env.var_store));

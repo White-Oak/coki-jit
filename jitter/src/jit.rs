@@ -108,42 +108,45 @@ impl IndexMut<usize> for JitMemory {
     }
 }
 
+unsafe extern "win64" fn print_from_asm(mut a: u64){
+    use libc::{c_void, write};
+    //Cleaning from `ret`
+    for i in 0..8 {
+        let res = (a >> (i * 8)) & 0xff;
+        if res == 0xcc {
+            a &= !((0xff << (i * 8)) as u64);
+        }
+    }
+    //42 to 2, 4, 0, 0 ...
+    let mut result: u64 = 0;
+    let mut counter = 0;
+    while a > 0 {
+        result += (a % 10 + 48) << (counter * 8);
+        a /= 10;
+        counter+=1;
+    }
+    //2, 4, 0, 0 to 4, 2, 0, 0
+    for i in 0..counter {
+        let res = (result >> (i * 8)) & 0xff;
+        a |= res << ((counter - i - 1) * 8)
+    }
+    let ptr: *const c_void = &a as *const _ as *const c_void;
+    write(1, ptr, counter);
+    // \r\n
+    let ptr: *const c_void = &0xd0a as *const _ as *const c_void;
+    write(1, ptr, 2);
+}
+
 pub const OUTPUT_OFFSET: usize = 2000;
 pub const VARIABLE_OFFSET: usize = 1000;
 pub const VARIABLE_MEMORY_SIZE: usize = 1000;
-fn print_output(jit: &JitMemory) {
-    let mut acc: i64 = 0;
-    let mut i = 0;
-    let mut ret_flag = true;
-    loop {
-        let value = jit[i + OUTPUT_OFFSET] as i64;
-        acc += value << ((i % 8) * 8);
-        if value != 0xc3 {
-            ret_flag = false; //if all 8 bytes are filled with 'ret'
-        }
-        print!("{:x} ", value);
-        if (i + 1) % 8 == 0 {
-            println!(" as qword: {}", acc);
-            if ret_flag {
-                break; //ret
-            }
-            acc = 0;
-            ret_flag = true;
-        }
-        i += 1;
-    }
-}
-fn jit_wrap(fun: fn(), jit: &JitMemory) {
-    fun();
-    print_output(jit);
-}
+pub const PRINT_FUNCTION: *const u8 = print_from_asm as *const u8;
 
-pub fn get_jit(bytes: &[u8]) -> Box<Fn()> {
+pub fn get_jit(bytes: &[u8]) -> fn() -> u64 {
     let mut jit: JitMemory = JitMemory::new(1);
     for &byte in bytes {
         jit.add(byte);
     }
     println!("Program loaded into the memory");
-    let fun = unsafe { mem::transmute(jit.contents) };
-    Box::new(move || jit_wrap(fun, &jit))
+    unsafe { mem::transmute(jit.contents) }
 }
