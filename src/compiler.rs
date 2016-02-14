@@ -1,5 +1,5 @@
 use asm_ops::*;
-use jitter::jit::OUTPUT_OFFSET;
+use coki_jitter::jit::OUTPUT_OFFSET;
 
 use std::error::Error;
 use std::io::prelude::*;

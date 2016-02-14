@@ -4,12 +4,7 @@ name = "coki"
 version = "0.1.0"
 authors = [ "Dan Simon <dan@dansimon.info>", "White Oak <lpzhelud@gmail.com>" ]
 
-[dependencies.peruse]
-git = "https://github.com/DanSimon/peruse.git"
-branch = "no-slice"
-
 [dependencies]
-regex = "0.1.10"
-jitter = { path = "jitter" }
-getopts = "0.2"
+coki_jitter = { path = "jitter" }
+coki_parser = { path = "parser" }
 clap = {version = "2", features = ["yaml"]}

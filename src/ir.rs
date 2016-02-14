@@ -1,9 +1,9 @@
-use grammar::*;
+use coki_parser::*;
 use asm_ops::*;
 use asm_ops::AsmOperand::*;
 use asm_ops::AsmOp::*;
 use asm_ops::Register::*;
-use jitter::jit::VARIABLE_OFFSET;
+use coki_jitter::jit::VARIABLE_OFFSET;
 
 struct AsmProgram {
     contents : Vec<AsmOp>

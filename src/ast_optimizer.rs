@@ -1,6 +1,6 @@
-use grammar::*;
-use grammar::Statement::*;
-use grammar::Expr::*;
+use coki_parser::*;
+use coki_parser::Statement::*;
+use coki_parser::Expr::*;
 fn optimize_expr(expr: &Expr) -> Expr{
     match expr{
         &AddSub(ref _terms) => {

@@ -1,0 +1,12 @@
+[package]
+
+name = "coki_parser"
+version = "0.1.0"
+authors = [ "Dan Simon <dan@dansimon.info>", "White Oak <lpzhelud@gmail.com>" ]
+
+[dependencies.peruse]
+git = "https://github.com/DanSimon/peruse.git"
+branch = "no-slice"
+
+[dependencies]
+regex = "0.1.10"

@@ -3,10 +3,8 @@ name = "coki"
 version = "0.1.0"
 dependencies = [
  "clap 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
- "jitter 0.1.0",
- "peruse 0.2.0 (git+https://github.com/DanSimon/peruse.git?branch=no-slice)",
- "regex 0.1.48 (registry+https://github.com/rust-lang/crates.io-index)",
+ "coki_jitter 0.1.0",
+ "coki_parser 0.1.0",
 ]
 
 [[package]]
@@ -40,17 +38,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "getopts"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "jitter"
+name = "coki_jitter"
 version = "0.1.0"
 dependencies = [
  "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "coki_parser"
+version = "0.1.0"
+dependencies = [
+ "peruse 0.2.0 (git+https://github.com/DanSimon/peruse.git?branch=no-slice)",
+ "regex 0.1.48 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
