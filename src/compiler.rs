@@ -24,6 +24,14 @@ impl fmt::Display for AsmOperand {
     }
 }
 
+pub unsafe extern "fastcall" fn do_it(a: &u64){
+    use libc::{c_void, write};
+    let ptr: *const c_void = a as *const _ as *const c_void;
+    write(1, ptr, 8);
+}
+
+extern crate winapi;
+extern crate kernel32;
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8> {
     let mut str = format!("use64\nlea r8, [rip]\nsub r8, 7\nadd r8, {}\n",
                           OUTPUT_OFFSET);
@@ -73,10 +81,44 @@ pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8> {
         str = str + &temp_str;
     }
     println!("\nOutput assembly is:\n{}\n", str);
+    unsafe {
+        let hmod = kernel32::GetModuleHandleA("kernel32.dll".as_ptr() as *const i8);
+        let getstd = kernel32::GetProcAddress(hmod, "GetStdHandle".as_ptr()  as *const i8);
+        let write = kernel32::GetProcAddress(hmod, "WriteConsoleA".as_ptr()  as *const i8);
+        let fun_ptr = do_it as *const u8;
+        let string = format!(r"use64
+        lea r10, [rip]
+        sub r10, 7
+        add r10, 2000
+        include 'proc64.inc'
 
-    write_asm(&str);
-    assemble();
-    read_bytes()
+
+        mov [r10], byte 50
+        mov [r10 + 1], byte 50
+        mov r11, {:?}
+        fastcall r11, r10
+    ", fun_ptr);
+        // let string = format!(r"use64
+        // lea r10, [rip]
+        // sub r10, 7
+        // add r10, 2000
+        // include 'include/win64a.inc'
+        //
+        // mov [r10], byte 50
+        // mov [r10 + 1], byte 50
+        //
+        // mov r11, {:?}
+        // fastcall r11, -11
+        //
+        // mov r11, {:?}
+        // fastcall r11, rax, r10, 2, 0, 0
+        // ret
+        // ", getstd, write );
+        println!("{}", string);
+        write_asm(&string);
+        assemble();
+        read_bytes()
+    }
 }
 
 fn write_asm(str: &String) {

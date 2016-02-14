@@ -4,6 +4,7 @@ extern crate coki_jitter;
 extern crate coki_parser;
 #[macro_use]
 extern crate clap;
+extern crate libc;
 
 use coki_parser::{parse, Block};
 use ir::translate;
@@ -23,22 +24,29 @@ pub mod optimizer;
 pub mod ast_optimizer;
 
 fn main() {
-    let yaml = load_yaml!("cli.yml");
-    let matches = App::from_yaml(yaml).get_matches();
-
-    let file = matches.value_of("INPUT").unwrap_or("examples/oka.coki");
-
-    let max_optimizations = matches.value_of("opts").unwrap_or("100").parse::<u8>().unwrap();
-
     let mut contents = String::new();
-    let mut f = File::open(file).unwrap();
+    let mut f = File::open("examples\\oka.coki").unwrap();
     let _ = f.read_to_string(&mut contents);
-
-    let bytes = interp(contents.as_str(), max_optimizations);
-    if !matches.is_present("bin") {
-        run(&bytes);
-    }
+    let bytes = interp(contents.as_str(), 100);
+    run(&bytes);
     println!("coki has done the job");
+
+    // let yaml = load_yaml!("cli.yml");
+    // let matches = App::from_yaml(yaml).get_matches();
+    //
+    // let file = matches.value_of("INPUT").unwrap_or("examples/oka.coki");
+    //
+    // let max_optimizations = matches.value_of("opts").unwrap_or("100").parse::<u8>().unwrap();
+    //
+    // let mut contents = String::new();
+    // let mut f = File::open(file).unwrap();
+    // let _ = f.read_to_string(&mut contents);
+    //
+    // let bytes = interp(contents.as_str(), max_optimizations);
+    // if !matches.is_present("bin") {
+    //     run(&bytes);
+    // }
+    // println!("coki has done the job");
 }
 fn run(bytes: &[u8]) {
     let fun = get_jit(bytes);

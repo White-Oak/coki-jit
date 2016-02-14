@@ -12,13 +12,10 @@ mod memory {
     extern crate libc;
     extern crate winapi;
     extern crate kernel32;
+    extern crate alloc;
 
-    extern "C" {
-        fn _aligned_malloc(size: libc::size_t, alignment: libc::size_t) -> *mut libc::c_void;
-    }
-
-    pub unsafe fn aligned_malloc(size: libc::size_t, alignment: libc::size_t) -> *mut libc::c_void {
-        _aligned_malloc(size, alignment)
+    pub unsafe fn aligned_malloc(size: libc::size_t, alignment: libc::size_t) -> *mut u8 {
+        alloc::heap::allocate(size, alignment)
     }
 
     pub unsafe fn make_executable(addr: *mut libc::c_void, size: libc::size_t) {
@@ -29,8 +26,8 @@ mod memory {
                                  _previous_protect as u32);
     }
 
-    pub unsafe fn free_memory(addr: *mut libc::c_void) {
-        libc::free(addr);
+    pub unsafe fn free_memory(addr: *mut u8, size: usize, alignment: usize) {
+        alloc::heap::deallocate(addr, size, alignment)
     }
 }
 
