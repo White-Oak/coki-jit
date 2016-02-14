@@ -1,0 +1,17 @@
+name: Coki JIT
+version: 0.1
+author: White-Oak <lpzhelud@gmail.com>
+about: Does awesome things
+args:
+    - opts:
+        long: max-optimizations
+        value_name: FILE
+        help: Sets a maximum number of optimizations
+        takes_value: true
+    - INPUT:
+        help: Sets the input file to use
+        required: true
+        index: 1
+    - bin:
+        long: bin
+        help: Sets binary output

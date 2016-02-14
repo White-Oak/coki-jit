@@ -1,10 +1,10 @@
 #![feature(custom_derive)]
 #![feature(unboxed_closures)]
-#![feature(convert)]
 extern crate regex;
 extern crate peruse;
 extern crate jitter;
 extern crate getopts;
+#[macro_use] extern crate clap;
 
 use grammar::*;
 use parser::program;
@@ -16,10 +16,8 @@ use optimizer::optimize;
 use ast_optimizer::optimize_ast;
 
 use std::fs::File;
-use std::env::args;
 use std::io::Read;
-use getopts::Options;
-
+use clap::App;
 
 pub mod lexer;
 pub mod grammar;
@@ -31,39 +29,13 @@ pub mod compiler;
 pub mod optimizer;
 pub mod ast_optimizer;
 
-
-fn print_usage(program: &str, opts: Options) {
-    let brief = format!("Usage: {} FILE [options]", program);
-    print!("{}", opts.usage(&brief));
-}
 fn main() {
-    let args: Vec<String> = args().collect();
-    let program = args[0].clone();
+    let yaml = load_yaml!("cli.yml");
+    let matches = App::from_yaml(yaml).get_matches();
 
-    let mut opts = Options::new();
-    opts.optopt("", "max-optimizations", "set a maximum number of optimization passes", "NUMBER");
-    opts.optflagopt("", "bin", "outputs a binary executable", "FILE");
-    opts.optflag("h", "help", "print this help menu");
-    let matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m }
-        Err(f) => { panic!(f.to_string()) }
-    };
-    if matches.opt_present("h") {
-        print_usage(&program, opts);
-        return;
-    }
+    let file = matches.value_of("INPUT").unwrap_or("examples/oka.coki");
 
-    let file = if !matches.free.is_empty() {
-        &matches.free[0] as &str
-    } else {
-        "examples/oka.coki"
-    };
-
-    let max_optimizations = if matches.opt_present("max-optimizations") {
-        matches.opt_str("max-optimizations").unwrap().parse::<u8>().unwrap()
-    } else {
-        100
-    };
+    let max_optimizations = matches.value_of("opts").unwrap_or("100").parse::<u8>().unwrap();
 
     let mut contents = String::new();
     let mut f = File::open(file).unwrap();

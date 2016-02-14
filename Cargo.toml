@@ -12,3 +12,4 @@ branch = "no-slice"
 regex = "0.1.10"
 jitter = { path = "jitter" }
 getopts = "0.2"
+clap = {version = "2", features = ["yaml"]}
