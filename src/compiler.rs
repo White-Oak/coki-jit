@@ -23,11 +23,7 @@ add r8, {}
 include 'PROC64.INC'
 print =  {:?}
 ", OUTPUT_OFFSET, PRINT_FUNCTION);
-    let mut block_counter = 0;
     for op in ops {
-        for _ in 0..block_counter {
-            string = string + &"  ";
-        }
         let temp_str = match op {
             &AsmOp::Add(ref dest, ref operand) => {
                 match (dest, operand) {
@@ -53,14 +49,8 @@ print =  {:?}
                     _ => format!("mov {}, {}\n", dest, operand),
                 }
             },
-            &AsmOp::Label(ref name) => {
-                block_counter += 1;
-                format!("{}:\n", name)
-            }
-            &AsmOp::Loop(ref name) => {
-                block_counter -= 1;
-                format!("\rloopq {}\n", name)
-            }
+            &AsmOp::Label(ref name) => format!("{}:\n", name),
+            &AsmOp::Loop(ref name) => format!("\rloopq {}\n", name),
             _ => format!("{}", op),
         };
         string = string + &temp_str;
