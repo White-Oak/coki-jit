@@ -16,10 +16,10 @@ fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp) {
     match (&previous, &op) {
         // From push rax; pop rbx
         // To mov rbx, rax
-
-        //can't mov [], [] -- skip it on
-        //push rax; pop rax
-        //finally, if it fits, transform into mov r, l  
+        //
+        // can't mov [], [] -- skip it on
+        // push rax; pop rax
+        // finally, if it fits, transform into mov r, l
         (&Push(ref l), &Pop(ref r)) => {
             enum_shuffle!((l, r)
                 when (&Memory(_), &MemoryRegister(_)) -> ((previous.clone(), op.clone())) or
@@ -30,8 +30,8 @@ fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp) {
         // From mov rax, ... ; push rax
         // To push ...
         (&Mov(ref before, ref needed), &Push(ref after)) if before == after => {
-            match before {
-                &Memory(_) => (previous.clone(), op.clone()),
+            match *before {
+                Memory(_) => (previous.clone(), op.clone()),
                 _ => (Push(needed.clone()), Nop),
             }
         }
@@ -39,15 +39,15 @@ fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp) {
     }
 }
 
-pub fn optimize(mut _ops: Vec<AsmOp>, iters: u8) -> Vec<AsmOp> {
+pub fn optimize(mut res_ops: Vec<AsmOp>, iters: u8) -> Vec<AsmOp> {
     let mut changed = true;
     let mut iterations = 0;
     while changed && iterations < iters {
         iterations += 1;
         changed = false;
         let mut ops: Vec<AsmOp> = Vec::new();
-        let mut previous = _ops.remove(0);
-        for op in _ops {
+        let mut previous = res_ops.remove(0);
+        for op in res_ops {
             let (optimized, pre) = optimize_stmt(op.clone(), previous);
             ops.push(optimized);
             previous = pre;
@@ -57,9 +57,9 @@ pub fn optimize(mut _ops: Vec<AsmOp>, iters: u8) -> Vec<AsmOp> {
         }
         ops.push(previous);
         ops.retain(|ref i| **i != Nop);
-        _ops = ops;
+        res_ops = ops;
     }
 
     println!("It took {} iterations to optimize IR code.", iterations);
-    _ops
+    res_ops
 }

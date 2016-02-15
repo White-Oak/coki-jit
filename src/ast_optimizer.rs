@@ -2,22 +2,22 @@ use coki_parser::*;
 use coki_parser::Statement::*;
 use coki_parser::Expr::*;
 fn optimize_expr(expr: &Expr) -> Expr {
-    match expr {
-        &AddSub(ref _terms) => {
+    match *expr {
+        AddSub(ref in_terms) => {
             let mut terms = Vec::new();
             let mut accumulator: i32 = 0;
-            for term in _terms {
+            for term in in_terms {
                 let new_expr_for_term = optimize_expr(&term.1);
                 if let Num(ref value) = new_expr_for_term {
-                    match &term.0 {
-                        &AddOp::Add | &AddOp::Start => accumulator += *value,
-                        &AddOp::Subtract => accumulator -= *value,
+                    match term.0 {
+                        AddOp::Add | AddOp::Start => accumulator += *value,
+                        AddOp::Subtract => accumulator -= *value,
                     }
                 } else {
                     terms.push(AddTerm(term.0.clone(), new_expr_for_term));
                 }
             }
-            if terms.len() == 0 {
+            if terms.is_empty() {
                 Num(accumulator)
             } else {
                 if accumulator != 0 {
@@ -26,22 +26,22 @@ fn optimize_expr(expr: &Expr) -> Expr {
                 AddSub(terms)
             }
         }
-        &MultDiv(ref _terms) => {
+        MultDiv(ref in_terms) => {
             let mut terms = Vec::new();
             let mut accumulator: i32 = 1;
-            for term in _terms {
+            for term in in_terms {
                 let new_expr_for_term = optimize_expr(&term.1);
                 if let Num(ref value) = new_expr_for_term {
-                    match &term.0 {
-                        &MultOp::Multiply | &MultOp::Start => accumulator *= *value,
-                        &MultOp::Divide => accumulator /= *value,
+                    match term.0 {
+                        MultOp::Multiply | MultOp::Start => accumulator *= *value,
+                        MultOp::Divide => accumulator /= *value,
                         _ => {} //What to do with modulo??
                     }
                 } else {
                     terms.push(MultTerm(term.0.clone(), new_expr_for_term));
                 }
             }
-            if terms.len() == 0 {
+            if terms.is_empty() {
                 Num(accumulator)
             } else {
                 if accumulator != 1 {
@@ -55,8 +55,8 @@ fn optimize_expr(expr: &Expr) -> Expr {
 }
 
 fn optimize_stmt(stmt: &Statement) -> Statement {
-    match stmt {
-        &Assign(ref name, ref expr) => Assign(name.clone(), optimize_expr(expr)),
+    match *stmt {
+        Assign(ref name, ref expr) => Assign(name.clone(), optimize_expr(expr)),
         _ => stmt.clone(),
     }
 }

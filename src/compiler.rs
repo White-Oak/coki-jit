@@ -14,15 +14,16 @@ impl fmt::Display for Register {
     }
 }
 
-pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8> {
+pub fn compile(ops: &[AsmOp]) -> Vec<u8> {
     let mut string = format!(r"include 'PROC64.INC'
 init_coki {}, {:?}
 ",
                              OUTPUT_OFFSET,
                              PRINT_FUNCTION);
     for op in ops {
-        let temp_str = match op {
-            &AsmOp::Add(ref dest, ref operand) => {
+        use asm_ops::AsmOp::*;
+        let temp_str = match *op {
+            Add(ref dest, ref operand) => {
                 match (dest, operand) {
                     (&AsmOperand::Memory(_), &AsmOperand::Value(_)) => {
                         format!("add {}, dword {}\n", dest, operand)
@@ -30,15 +31,15 @@ init_coki {}, {:?}
                     _ => format!("add {}, {}\n", dest, operand),
                 }
             }
-            &AsmOp::Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
+            Sub(ref dest, ref operand) => format!("sub {}, {}\n", dest, operand),
 
-            &AsmOp::Mul(ref dest, ref operand) => format!("imul {}, {}\n", dest, operand),
-            &AsmOp::Div(_, _) => panic!(),
-            &AsmOp::Mod(_, _) => panic!(),
+            Mul(ref dest, ref operand) => format!("imul {}, {}\n", dest, operand),
+            Div(_, _) => panic!(),
+            Mod(_, _) => panic!(),
 
-            &AsmOp::Pop(ref dest) => format!("popq {}\n", dest),
-            &AsmOp::Push(ref dest) => format!("pushq {}\n", dest),
-            &AsmOp::Mov(ref dest, ref operand) => {
+            Pop(ref dest) => format!("popq {}\n", dest),
+            Push(ref dest) => format!("pushq {}\n", dest),
+            Mov(ref dest, ref operand) => {
                 match (dest, operand) {
                     (&AsmOperand::Memory(_), &AsmOperand::Value(_)) => {
                         format!("mov {}, dword {}\n", dest, operand)
@@ -49,8 +50,8 @@ init_coki {}, {:?}
                     _ => format!("mov {}, {}\n", dest, operand),
                 }
             }
-            &AsmOp::Label(ref name) => format!("{}:\n", name),
-            &AsmOp::Loop(ref name) => format!("\rloopq {}\n", name),
+            Label(ref name) => format!("{}:\n", name),
+            Loop(ref name) => format!("\rloopq {}\n", name),
             _ => format!("{}", op),
         };
         string = string + &temp_str;
@@ -61,7 +62,7 @@ init_coki {}, {:?}
     read_bytes()
 }
 
-fn write_asm(str: &String) {
+fn write_asm(str: &str) {
     let path = Path::new("target/temp.asm");
     let display = path.display();
 

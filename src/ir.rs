@@ -37,7 +37,6 @@ trait AsmableExpression{
 
 impl AsmableExpression for Expr {
     fn get_ops(&self, var_store: &VarStore) -> Vec<AsmOp> {
-        let mut ops = Vec::new();
         fn add(terms: &[AddTerm], var_store: &VarStore) -> Vec<AsmOp> {
             let mut ops = Vec::new();
             for term in terms {
@@ -54,9 +53,10 @@ impl AsmableExpression for Expr {
             ops.push(Push(RegisterOperand(Register::RAX)));
             ops
         }
+        let mut ops = Vec::new();
         match *self {
-            Expr::AddSub(ref terms) => ops.extend(add(terms.as_slice(), var_store)),
-            Expr::MultDiv(ref terms) => ops.extend(mult(terms.as_slice(), var_store)),
+            Expr::AddSub(ref terms) => ops.extend(add(&terms, var_store)),
+            Expr::MultDiv(ref terms) => ops.extend(mult(&terms, var_store)),
             Expr::Num(ref num) => ops.push(Push(Value(*num))),
             Expr::Variable(ref name) => ops.push(Push(Memory(var_store.get_var_address_r(name)))),
         }
@@ -123,7 +123,6 @@ trait AsmableStatement{
 
 impl AsmableStatement for Statement {
     fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram) {
-        println!("\n{:?}\nIs translated into:", self);
         fn match_comparator(cmp: Comparator, label: String) -> AsmOp {
             use coki_parser::Comparator::*;
             match cmp {
@@ -135,19 +134,20 @@ impl AsmableStatement for Statement {
                 CLeq => Jbe(label),
             }
         }
-        match self {
-            &Statement::Assign(ref name, ref expr) => {
+        println!("\n{:?}\nIs translated into:", self);
+        match *self {
+            Statement::Assign(ref name, ref expr) => {
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(Memory(env.var_store.get_var_address_l(name))));
             }
-            &Statement::Output(ref expr) => {
+            Statement::Output(ref expr) => {
                 // popq [r15]
                 // out
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(MemoryRegister(R8)));
                 program.add(Out);
             }
-            &Statement::Loop(ref expr, ref block) => {
+            Statement::Loop(ref expr, ref block) => {
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(RegisterOperand(RCX)));
 
@@ -156,7 +156,7 @@ impl AsmableStatement for Statement {
                 translate_stmts(&block.0, &mut env, &mut program);
                 program.add(Loop(label));
             }
-            &Statement::While(ref l, cmp, ref r, ref block) => {
+            Statement::While(ref l, cmp, ref r, ref block) => {
                 let label = env.loopl_store.get_next_loop_label();
                 program.add(Label(label.clone()));
                 program.extend(l.get_ops(&env.var_store));
@@ -173,7 +173,7 @@ impl AsmableStatement for Statement {
                 program.add(Jmp(label));
                 program.add(Label(end_label));
             }
-            &Statement::If(ref l, cmp, ref r, ref block, ref else_block_opt) => {
+            Statement::If(ref l, cmp, ref r, ref block, ref else_block_opt) => {
                 program.extend(l.get_ops(&env.var_store));
                 program.add(Pop(RegisterOperand(RAX)));
                 program.extend(r.get_ops(&env.var_store));
@@ -185,15 +185,15 @@ impl AsmableStatement for Statement {
                 let jmp_op = match_comparator(!cmp, else_label.clone());
                 program.add(jmp_op);
                 translate_stmts(&block.0, &mut env, &mut program);
-                match else_block_opt {
-                    &Some(ref block) => {
+                match *else_block_opt {
+                    Some(ref block) => {
                         let after_label = env.loopl_store.get_next_loop_label();
                         program.add(Jmp(after_label.clone()));
                         program.add(Label(else_label));
                         translate_stmts(&block.0, &mut env, &mut program);
                         program.add(Label(after_label));
                     }
-                    &None => program.add(Label(else_label)),
+                    None => program.add(Label(else_label)),
                 }
             }
             // _ => {}
@@ -217,15 +217,15 @@ impl VarStore {
         }
     }
 
-    fn get_var_address_r(&self, name: &String) -> u16 {
+    fn get_var_address_r(&self, name: &str) -> u16 {
         match self.variables.get(name) {
             Some(address) => *address,
             None => panic!("No variable named {}.", name),
         }
     }
-    fn get_var_address_l(&mut self, name: &String) -> u16 {
+    fn get_var_address_l(&mut self, name: &str) -> u16 {
         if !self.variables.contains_key(name) {
-            let result = self.variables.insert(name.to_string(), self.current_address);
+            let result = self.variables.insert(name.to_owned(), self.current_address);
             match result {
                 Some(_) => panic!(),
                 None => {
@@ -266,17 +266,15 @@ impl Environment {
     }
 }
 
-fn translate_stmts(block: &Vec<Statement>,
-                   mut env: &mut Environment,
-                   mut program: &mut AsmProgram) {
+fn translate_stmts(block: &[Statement], mut env: &mut Environment, mut program: &mut AsmProgram) {
     for stmt in block {
         stmt.get_ops(&mut env, &mut program);
     }
 }
 ///Translates AST into a sequence of asm instructions
-pub fn translate(block: &Vec<Statement>) -> Box<Vec<AsmOp>> {
+pub fn translate(block: &[Statement]) -> Vec<AsmOp> {
     let mut ops = AsmProgram::new();
     let mut env = Environment::new();
     translate_stmts(block, &mut env, &mut ops);
-    Box::new(ops.contents)
+    ops.contents
 }

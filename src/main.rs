@@ -37,21 +37,64 @@ fn main() {
     let bytes = interp(contents.as_str(), max_optimizations);
     if !matches.is_present("bin") {
         run(&bytes);
+    } else {
+        save_for_wrapper(&bytes);
     }
     println!("coki has done the job");
 }
+
+use std::error::Error;
+use std::io::Write;
+use std::path::Path;
+use std::process::Command;
+fn save_for_wrapper(bytes: &[u8]) {
+    let path = Path::new("wrapper/temp.bin");
+    let display = path.display();
+
+    let mut file = match File::create(&path) {
+        Err(why) => panic!("couldn't create {}: {}", display, Error::description(&why)),
+        Ok(file) => file,
+    };
+
+    match file.write_all(bytes) {
+        Err(why) => {
+            panic!("couldn't write to {}: {}",
+                   display,
+                   Error::description(&why))
+        }
+        Ok(_) => println!("Successfully wrote to {}", display),
+    }
+
+    let output = Command::new("cargo")
+                     .arg("build")
+                     .arg("--release")
+                     .current_dir("wrapper")
+                     .output()
+                     .unwrap_or_else(|e| panic!("failed to execute process: {}", e));;
+
+    if !output.status.success() {
+        println!("status: {}", output.status);
+        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+        panic!("Can't create a binary!");
+    } else {
+        println!("Successfully wrapped to wrapper/target/release/wrapper.exe");
+    }
+}
+
 fn run(bytes: &[u8]) {
     let fun = get_jit(bytes);
     println!("Output:");
     fun();
 }
-fn interp<'a>(raw: &'a str, opt: u8) -> Vec<u8> {
+
+fn interp(raw: &str, opt: u8) -> Vec<u8> {
     match parse(raw) {
         Ok(Block(stmts)) => {
             let opt_ast = optimize_ast(stmts, opt);
             let ops = translate(&opt_ast);
             let _ = compile(&ops);
-            let opt_ops = optimize(*ops, opt);
+            let opt_ops = optimize(ops, opt);
             compile(&opt_ops)
         }
         Err(err) => panic!("Parse Error: {:?}", err),
