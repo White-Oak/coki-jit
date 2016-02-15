@@ -2,7 +2,7 @@
 I've found [peruse](https://github.com/DanSimon/peruse.git) to be a great parser combinator library and [coki](https://github.com/DanSimon/coki.git) — an amazing point to start using it.   
 My goal was to implement a working JIT for a simple language.
 
-Current version is working only on 64-bit Windows.
+Current version is working on 64-bit Windows and 64-bit Linux.
 
 Original README is providen below:
 
