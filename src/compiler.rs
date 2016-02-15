@@ -15,14 +15,15 @@ impl fmt::Display for Register {
 }
 
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8> {
-    let mut string = format!(
-r"use64
+    let mut string = format!(r"use64
 lea r8, [rip]
 sub r8, 7
 add r8, {}
 include 'PROC64.INC'
 print =  {:?}
-", OUTPUT_OFFSET, PRINT_FUNCTION);
+",
+                             OUTPUT_OFFSET,
+                             PRINT_FUNCTION);
     for op in ops {
         let temp_str = match op {
             &AsmOp::Add(ref dest, ref operand) => {
@@ -45,13 +46,13 @@ print =  {:?}
                 match (dest, operand) {
                     (&AsmOperand::Memory(_), &AsmOperand::Value(_)) => {
                         format!("mov {}, dword {}\n", dest, operand)
-                    },
+                    }
                     (&AsmOperand::MemoryRegister(_), &AsmOperand::Value(_)) => {
                         format!("mov {}, dword {}\n", dest, operand)
                     }
                     _ => format!("mov {}, {}\n", dest, operand),
                 }
-            },
+            }
             &AsmOp::Label(ref name) => format!("{}:\n", name),
             &AsmOp::Loop(ref name) => format!("\rloopq {}\n", name),
             _ => format!("{}", op),

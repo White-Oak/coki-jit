@@ -124,8 +124,8 @@ trait AsmableStatement{
 impl AsmableStatement for Statement {
     fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram) {
         println!("\n{:?}\nIs translated into:", self);
-        fn match_comparator(cmp: Comparator, label: String)-> AsmOp {
-        use coki_parser::Comparator::*;
+        fn match_comparator(cmp: Comparator, label: String) -> AsmOp {
+            use coki_parser::Comparator::*;
             match cmp {
                 CEq => Je(label),
                 CGt => Ja(label),
@@ -192,11 +192,11 @@ impl AsmableStatement for Statement {
                         program.add(Label(else_label));
                         translate_stmts(&block.0, &mut env, &mut program);
                         program.add(Label(after_label));
-                    },
-                    &None => program.add(Label(else_label))
+                    }
+                    &None => program.add(Label(else_label)),
                 }
             }
-            //_ => {}
+            // _ => {}
         }
     }
 }

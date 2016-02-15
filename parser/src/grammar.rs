@@ -1,16 +1,12 @@
 
-#[derive(Debug)]
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum AddOp {
     Add,
     Subtract,
     Start,
 }
 
-#[derive(Debug)]
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum MultOp {
     Multiply,
     Divide,
@@ -18,19 +14,13 @@ pub enum MultOp {
     Start,
 }
 
-#[derive(Clone)]
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Clone,Debug,PartialEq)]
 pub struct AddTerm(pub AddOp, pub Expr);
 
-#[derive(Clone)]
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Clone,Debug,PartialEq)]
 pub struct MultTerm(pub MultOp, pub Expr);
 
-#[derive(Debug)]
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum Expr {
     Variable(String),
     Num(i32),
@@ -40,14 +30,10 @@ pub enum Expr {
 
 
 // for now this is it's own type and not a statement
-#[derive(Debug)]
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Debug,Clone,PartialEq)]
 pub struct Block(pub Vec<Statement>);
 
-#[derive(Debug)]
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum Statement {
     Assign(String, Expr),
     Output(Expr),

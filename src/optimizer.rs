@@ -2,7 +2,8 @@ use asm_ops::*;
 use asm_ops::AsmOp::*;
 use asm_ops::AsmOperand::*;
 macro_rules! enum_shuffle(
-    (($l:expr, $r:expr) when ($sp1:pat , $sp2:pat) -> ($success:expr) $(or when ($sp_or:pat) $(if ($cond:expr))* -> ($failure:expr))*) =>(
+    (($l:expr, $r:expr) when ($sp1:pat , $sp2:pat) -> ($success:expr)
+    $(or when ($sp_or:pat) $(if ($cond:expr))* -> ($failure:expr))*) =>(
         match ($l, $r) {
             ($sp1, $sp1) | ($sp1, $sp2) | ($sp2, $sp1) | ($sp2, $sp2) => $success,
             $($sp_or $(if $cond)* => $failure,)*
@@ -15,11 +16,15 @@ fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp) {
     match (&previous, &op) {
         // From push rax; pop rbx
         // To mov rbx, rax
+        //
+        // can't mov [], [] -- skip it on
+        // push rax; pop rax
+        // finally, if it fits, transform into mov r, l
         (&Push(ref l), &Pop(ref r)) => {
             enum_shuffle!((l, r)
-                when (&Memory(_), &MemoryRegister(_)) -> ((previous.clone(), op.clone())) or //can't mov [], [] -- skip it on
-                when (_) if (l == r) -> ((Nop, Nop)) or                                      //push rax; pop rax
-                when (_) -> ((Mov(r.clone(), l.clone()), Nop))                               //finally, if it fits, transform into mov r, l
+                when (&Memory(_), &MemoryRegister(_)) -> ((previous.clone(), op.clone())) or
+                when (_) if (l == r) -> ((Nop, Nop)) or
+                when (_) -> ((Mov(r.clone(), l.clone()), Nop))
             )
         }
         // From mov rax, ... ; push rax

@@ -28,7 +28,7 @@ pub enum AsmOp {
 }
 
 use std::fmt::{Display, Formatter, Result};
-impl Display for AsmOp{
+impl Display for AsmOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         use self::AsmOp::*;
         match self {
@@ -40,8 +40,9 @@ impl Display for AsmOp{
             &Jae(ref label) => write!(f, "jae {}\n", label),
             &Jbe(ref label) => write!(f, "jbe {}\n", label),
             &Jmp(ref label) => write!(f, "jmp {}\n", label),
-            &Out => write!(f,
-r"
+            &Out => {
+                write!(f,
+                       r"
 ;printing variable
 push r8
 push rcx
@@ -50,8 +51,9 @@ invoke r10, qword [r8]
 pop rcx
 pop r8
 
-"),
-            _ => unimplemented!()
+")
+            }
+            _ => unimplemented!(),
         }
     }
 }
@@ -83,5 +85,5 @@ pub enum Register {
     RCX,
     RDX,
     R8,
-    R15
+    R15,
 }
