@@ -15,6 +15,15 @@ pub enum AsmOp {
     Label(String),
     Loop(String),
 
+    Cmp(AsmOperand, AsmOperand),
+    Je(String),
+    Ja(String),
+    Jb(String),
+    Jne(String),
+    Jae(String),
+    Jbe(String),
+    Jmp(String),
+
     Nop,
 }
 
@@ -23,6 +32,14 @@ impl Display for AsmOp{
     fn fmt(&self, f: &mut Formatter) -> Result {
         use self::AsmOp::*;
         match self {
+            &Cmp(ref l, ref r) => write!(f, "cmp {}, {}\n", l, r),
+            &Je(ref label) => write!(f, "je {}\n", label),
+            &Ja(ref label) => write!(f, "ja {}\n", label),
+            &Jb(ref label) => write!(f, "jb {}\n", label),
+            &Jne(ref label) => write!(f, "jne {}\n", label),
+            &Jae(ref label) => write!(f, "jae {}\n", label),
+            &Jbe(ref label) => write!(f, "jbe {}\n", label),
+            &Jmp(ref label) => write!(f, "jmp {}\n", label),
             &Out => write!(f,
 r"
 ;printing variable

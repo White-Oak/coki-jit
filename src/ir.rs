@@ -124,20 +124,19 @@ trait AsmableStatement{
 impl AsmableStatement for Statement {
     fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram) {
         println!("\n{:?}\nIs translated into:", self);
-        match *self {
-            Statement::Assign(ref name, ref expr) => {
+        match self {
+            &Statement::Assign(ref name, ref expr) => {
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(Memory(env.var_store.get_var_address_l(name))));
             }
-            Statement::Output(ref expr) => {
+            &Statement::Output(ref expr) => {
                 // popq [r15]
                 // out
-                //
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(MemoryRegister(R8)));
                 program.add(Out);
             }
-            Statement::Loop(ref expr, ref block) => {
+            &Statement::Loop(ref expr, ref block) => {
                 program.extend(expr.get_ops(&env.var_store));
                 program.add(Pop(RegisterOperand(RCX)));
 
@@ -145,6 +144,31 @@ impl AsmableStatement for Statement {
                 program.add(Label(label.clone()));
                 translate_stmts(&block.0, &mut env, &mut program);
                 program.add(Loop(label));
+            }
+            &Statement::While(ref l, cmp, ref r, ref block) => {
+                let label = env.loopl_store.get_next_loop_label();
+                program.add(Label(label.clone()));
+                program.extend(l.get_ops(&env.var_store));
+                program.add(Pop(RegisterOperand(RAX)));
+                program.extend(r.get_ops(&env.var_store));
+                program.add(Pop(RegisterOperand(RBX)));
+
+                program.add(Cmp(RegisterOperand(RAX), RegisterOperand(RBX)));
+
+                let end_label = env.loopl_store.get_next_loop_label();
+                use coki_parser::Comparator::*;
+                let jmp_op = match !cmp {
+                    CEq => Je(end_label.clone()),
+                    CGt => Ja(end_label.clone()),
+                    CLt => Jb(end_label.clone()),
+                    CNeq => Jne(end_label.clone()),
+                    CGeq => Jae(end_label.clone()),
+                    CLeq => Jbe(end_label.clone()),
+                };
+                program.add(jmp_op);
+                translate_stmts(&block.0, &mut env, &mut program);
+                program.add(Jmp(label));
+                program.add(Label(end_label));
             }
             _ => {}
         }
@@ -198,7 +222,7 @@ impl LoopLabelStore {
     fn get_next_loop_label(&mut self) -> String {
         let num = self.0;
         self.0 += 1;
-        format!("label{}", num).to_string()
+        format!("label{}", num)
     }
 }
 

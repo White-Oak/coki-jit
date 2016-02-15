@@ -1,0 +1,7 @@
+n = 1
+
+while n != 2 {
+  n = n + 1
+}
+
+out n
