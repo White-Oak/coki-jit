@@ -40,19 +40,7 @@ impl Display for AsmOp {
             &Jae(ref label) => write!(f, "jae {}\n", label),
             &Jbe(ref label) => write!(f, "jbe {}\n", label),
             &Jmp(ref label) => write!(f, "jmp {}\n", label),
-            &Out => {
-                write!(f,
-                       r"
-;printing variable
-push r8
-push rcx
-mov r10, print
-invoke r10, qword [r8]
-pop rcx
-pop r8
-
-")
-            }
+            &Out => write!(f, "print_r8\n"),
             _ => unimplemented!(),
         }
     }

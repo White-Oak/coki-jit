@@ -16,10 +16,10 @@ fn optimize_stmt(op: AsmOp, previous: AsmOp) -> (AsmOp, AsmOp) {
     match (&previous, &op) {
         // From push rax; pop rbx
         // To mov rbx, rax
-        //
-        // can't mov [], [] -- skip it on
-        // push rax; pop rax
-        // finally, if it fits, transform into mov r, l
+
+        //can't mov [], [] -- skip it on
+        //push rax; pop rax
+        //finally, if it fits, transform into mov r, l  
         (&Push(ref l), &Pop(ref r)) => {
             enum_shuffle!((l, r)
                 when (&Memory(_), &MemoryRegister(_)) -> ((previous.clone(), op.clone())) or

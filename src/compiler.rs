@@ -15,12 +15,8 @@ impl fmt::Display for Register {
 }
 
 pub fn compile(ops: &Vec<AsmOp>) -> Vec<u8> {
-    let mut string = format!(r"use64
-lea r8, [rip]
-sub r8, 7
-add r8, {}
-include 'PROC64.INC'
-print =  {:?}
+    let mut string = format!(r"include 'PROC64.INC'
+init_coki {}, {:?}
 ",
                              OUTPUT_OFFSET,
                              PRINT_FUNCTION);

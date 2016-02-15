@@ -1,3 +1,20 @@
+macro init_coki var_offset, print_adress{
+    use64
+    lea r8, [rip]
+    sub r8, 7
+    add r8, var_offset
+    print =  print_adress
+}
+
+macro print_r8 {
+common
+    push r8
+    push rcx
+    mov r10, print
+    invoke r10, qword [r8]
+    pop rcx
+    pop r8
+}
 
 ; Macroinstructions for defining and calling procedures (x64 version)
 macro invoke name, [args]{
