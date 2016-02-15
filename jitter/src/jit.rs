@@ -118,20 +118,14 @@ unsafe extern "win64" fn print_from_asm(mut a: u64){
         }
     }
     //42 to 2, 4, 0, 0 ...
-    let mut result: u64 = 0;
-    let mut counter = 0;
+    let mut result = Vec::new();
     while a > 0 {
-        result += (a % 10 + 48) << (counter * 8);
+        result.push((a % 10 + 48) as u8);
         a /= 10;
-        counter+=1;
     }
-    //2, 4, 0, 0 to 4, 2, 0, 0
-    for i in 0..counter {
-        let res = (result >> (i * 8)) & 0xff;
-        a |= res << ((counter - i - 1) * 8)
-    }
-    let ptr: *const c_void = &a as *const _ as *const c_void;
-    write(1, ptr, counter);
+    result.reverse();
+    let ptr: *const c_void = result.as_ptr() as *const c_void;
+    write(1, ptr, result.len());
     // \r\n
     let ptr: *const c_void = &0xd0a as *const _ as *const c_void;
     write(1, ptr, 2);

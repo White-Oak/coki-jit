@@ -20,7 +20,7 @@ r"use64
 lea r8, [rip]
 sub r8, 7
 add r8, {}
-include 'proc64.inc'
+include 'PROC64.INC'
 print =  {:?}
 ", OUTPUT_OFFSET, PRINT_FUNCTION);
     let mut block_counter = 0;

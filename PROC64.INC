@@ -1,9 +1,14 @@
 
 ; Macroinstructions for defining and calling procedures (x64 version)
-
-macro invoke proc,[arg]
- { common fastcall [proc],arg }
-
+macro invoke name, [args]{
+common
+   PUSH RSP             ;save current RSP position on the stack
+   PUSH qword [RSP]           ;keep another copy of that on the stack
+   add rsp, 8
+   AND SPL,0F0h         ;adjust RSP to align the stack if not already there
+   fastcall name, args
+   POP RSP              ;restore RSP to its original value
+}
 macro fastcall proc,[arg]
  { common local stackspace,argscount,counter
     if argscount < 4
@@ -575,34 +580,34 @@ macro endf
    restore size@frame,current@frame }
 
 macro static_rsp_prologue procname,flag,parmbytes,localbytes,reglist
- { local counter,loc,frame,current 
-   counter = 0 
-   irps reg, reglist \{ push reg 
-			counter = counter+1 \} 
-   loc = (localbytes+7) and (not 7) 
-   if frame & (counter+loc shr 3+1) and 1 
-    loc = loc + 8 
-   end if 
-   framebytes@proc equ frame+loc 
-   if framebytes@proc 
-    sub rsp,framebytes@proc 
-   end if 
-   localbase@proc equ rsp+frame 
-   regsbase@proc equ rsp+frame+loc 
-   parmbase@proc equ rsp+frame+loc+counter*8+8 
-   current = 0 
-   current@frame equ current 
-   size@frame equ frame } 
+ { local counter,loc,frame,current
+   counter = 0
+   irps reg, reglist \{ push reg
+			counter = counter+1 \}
+   loc = (localbytes+7) and (not 7)
+   if frame & (counter+loc shr 3+1) and 1
+    loc = loc + 8
+   end if
+   framebytes@proc equ frame+loc
+   if framebytes@proc
+    sub rsp,framebytes@proc
+   end if
+   localbase@proc equ rsp+frame
+   regsbase@proc equ rsp+frame+loc
+   parmbase@proc equ rsp+frame+loc+counter*8+8
+   current = 0
+   current@frame equ current
+   size@frame equ frame }
 
-macro static_rsp_epilogue procname,flag,parmbytes,localbytes,reglist 
- { if framebytes@proc 
-    add rsp,framebytes@proc 
-   end if 
-   irps reg, reglist \{ reverse pop reg \} 
-   retn } 
+macro static_rsp_epilogue procname,flag,parmbytes,localbytes,reglist
+ { if framebytes@proc
+    add rsp,framebytes@proc
+   end if
+   irps reg, reglist \{ reverse pop reg \}
+   retn }
 
-macro static_rsp_close procname,flag,parmbytes,localbytes,reglist 
- { size@frame = current@frame 
+macro static_rsp_close procname,flag,parmbytes,localbytes,reglist
+ { size@frame = current@frame
    restore size@frame,current@frame }
 
 stdcall fix fastcall

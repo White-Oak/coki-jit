@@ -24,10 +24,15 @@ impl Display for AsmOp{
         use self::AsmOp::*;
         match self {
             &Out => write!(f,
-r"push r8
+r"
+;printing variable
+push r8
+push rcx
 mov r10, print
-fastcall r10, qword [r8]
+invoke r10, qword [r8]
+pop rcx
 pop r8
+
 "),
             _ => unimplemented!()
         }
