@@ -1,0 +1,8 @@
+n = 1
+
+if n != 1 {
+  out n
+} else {
+  out n * 2
+}
+out n + 1

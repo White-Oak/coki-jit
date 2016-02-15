@@ -45,6 +45,9 @@ print =  {:?}
                 match (dest, operand) {
                     (&AsmOperand::Memory(_), &AsmOperand::Value(_)) => {
                         format!("mov {}, dword {}\n", dest, operand)
+                    },
+                    (&AsmOperand::MemoryRegister(_), &AsmOperand::Value(_)) => {
+                        format!("mov {}, dword {}\n", dest, operand)
                     }
                     _ => format!("mov {}, {}\n", dest, operand),
                 }

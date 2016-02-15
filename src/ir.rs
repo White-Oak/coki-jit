@@ -124,6 +124,17 @@ trait AsmableStatement{
 impl AsmableStatement for Statement {
     fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram) {
         println!("\n{:?}\nIs translated into:", self);
+        fn match_comparator(cmp: Comparator, label: String)-> AsmOp {
+        use coki_parser::Comparator::*;
+            match cmp {
+                CEq => Je(label),
+                CGt => Ja(label),
+                CLt => Jb(label),
+                CNeq => Jne(label),
+                CGeq => Jae(label),
+                CLeq => Jbe(label),
+            }
+        }
         match self {
             &Statement::Assign(ref name, ref expr) => {
                 program.extend(expr.get_ops(&env.var_store));
@@ -156,21 +167,36 @@ impl AsmableStatement for Statement {
                 program.add(Cmp(RegisterOperand(RAX), RegisterOperand(RBX)));
 
                 let end_label = env.loopl_store.get_next_loop_label();
-                use coki_parser::Comparator::*;
-                let jmp_op = match !cmp {
-                    CEq => Je(end_label.clone()),
-                    CGt => Ja(end_label.clone()),
-                    CLt => Jb(end_label.clone()),
-                    CNeq => Jne(end_label.clone()),
-                    CGeq => Jae(end_label.clone()),
-                    CLeq => Jbe(end_label.clone()),
-                };
+                let jmp_op = match_comparator(!cmp, end_label.clone());
                 program.add(jmp_op);
                 translate_stmts(&block.0, &mut env, &mut program);
                 program.add(Jmp(label));
                 program.add(Label(end_label));
             }
-            _ => {}
+            &Statement::If(ref l, cmp, ref r, ref block, ref else_block_opt) => {
+                program.extend(l.get_ops(&env.var_store));
+                program.add(Pop(RegisterOperand(RAX)));
+                program.extend(r.get_ops(&env.var_store));
+                program.add(Pop(RegisterOperand(RBX)));
+                program.add(Cmp(RegisterOperand(RAX), RegisterOperand(RBX)));
+
+                let else_label = env.loopl_store.get_next_loop_label();
+
+                let jmp_op = match_comparator(!cmp, else_label.clone());
+                program.add(jmp_op);
+                translate_stmts(&block.0, &mut env, &mut program);
+                match else_block_opt {
+                    &Some(ref block) => {
+                        let after_label = env.loopl_store.get_next_loop_label();
+                        program.add(Jmp(after_label.clone()));
+                        program.add(Label(else_label));
+                        translate_stmts(&block.0, &mut env, &mut program);
+                        program.add(Label(after_label));
+                    },
+                    &None => program.add(Label(else_label))
+                }
+            }
+            //_ => {}
         }
     }
 }
