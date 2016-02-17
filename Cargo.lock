@@ -3,6 +3,7 @@ name = "coki"
 version = "0.1.0"
 dependencies = [
  "clap 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "coki_grammar 0.1.0",
  "coki_jitter 0.1.0",
  "coki_parser 0.1.0",
 ]
@@ -38,6 +39,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "coki_grammar"
+version = "0.1.0"
+
+[[package]]
 name = "coki_jitter"
 version = "0.1.0"
 dependencies = [
@@ -50,6 +55,7 @@ dependencies = [
 name = "coki_parser"
 version = "0.1.0"
 dependencies = [
+ "coki_grammar 0.1.0",
  "peruse 0.2.0 (git+https://github.com/DanSimon/peruse.git?branch=no-slice)",
  "regex 0.1.48 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

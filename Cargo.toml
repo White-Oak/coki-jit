@@ -7,4 +7,5 @@ authors = [ "Dan Simon <dan@dansimon.info>", "White Oak <lpzhelud@gmail.com>" ]
 [dependencies]
 coki_jitter = { path = "jitter" }
 coki_parser = { path = "parser" }
+coki_grammar = { path = "grammar" }
 clap = {version = "2", features = ["yaml"]}

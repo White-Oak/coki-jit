@@ -1,8 +1,8 @@
 use peruse::slice_parsers::*;
 use peruse::string_parsers::*;
 
-use grammar_lexer::*;
-use grammar::*;
+use coki_grammar::grammar_lexer::*;
+use coki_grammar::grammar::Comparator;
 use std::str::FromStr;
 
 // type Lexer = SliceParser<I=str, O=Token>;

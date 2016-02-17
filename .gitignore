@@ -2,3 +2,4 @@ target/
 wrapper/Cargo.lock
 parser/Cargo.lock
 jitter/Cargo.lock
+grammar/Cargo.lock

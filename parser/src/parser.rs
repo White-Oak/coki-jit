@@ -1,9 +1,46 @@
-use grammar::*;
-use grammar_lexer::*;
+use coki_grammar::grammar::*;
+use coki_grammar::grammar_lexer::*;
 
 use peruse::slice_parsers::*;
 
 pub fn program() -> Box<SliceParser<I = [Token], O = Block>> {
+
+    fn code_block() -> Box<SliceParser<I = [Token], O = Block>> {
+        Box::new(lit(Token::OpenBrace)
+                     .then_r(recursive(|| program()))
+                     .then_l(lit(Token::CloseBrace)))
+    }
+
+    fn if_stmt() -> Box<SliceParser<I = [Token], O = Statement>> {
+
+        let comparator = || {
+            matcher(|token| {
+                match token {
+                    Token::Cmp(cmp) => Some(cmp),
+                    _ => None,
+                }
+            })
+        };
+
+
+        let else_block = lit(Token::ElseKeyword).then_r(recursive(if_stmt)
+                                                            .map(|i| Block(vec![i]))
+                                                            .or(boxed(code_block())));
+
+        let p = lit(Token::IfKeyword)
+                    .then_r(recursive(|| expression()))
+                    .then(comparator())
+                    .then(recursive(expression))
+                    .then_l(lit(Token::OpenBrace))
+                    .then(recursive(program))
+                    .then_l(lit(Token::CloseBrace))
+                    .then(opt(else_block))
+                    .map(|((((l, cmp), r), block), else_opt)| {
+                        Statement::If(l, cmp, r, block, else_opt)
+                    });
+
+        Box::new(p)
+    }
 
     fn expression() -> Box<SliceParser<I = [Token], O = Expr>> {
         let simple_term = matcher(|token| {
@@ -41,7 +78,7 @@ pub fn program() -> Box<SliceParser<I = [Token], O = Block>> {
             let p = factor.clone().then(multop.then(factor).repeat()).map(|(first, seq)| {
                 let mut ops = Vec::new();
                 ops.push(MultTerm(MultOp::Start, first));
-                for &(ref op, ref value) in seq.iter() {
+                for &(ref op, ref value) in &seq {
                     ops.push(MultTerm(op.clone(), value.clone())); //maybe box the value instead
                 }
                 if ops.len() == 1 {
@@ -57,7 +94,7 @@ pub fn program() -> Box<SliceParser<I = [Token], O = Block>> {
             let p = mult.clone().then(addop.then(mult).repeat()).map(|(first, seq)| {
                 let mut ops = Vec::new();
                 ops.push(AddTerm(AddOp::Start, first));
-                for &(ref op, ref value) in seq.iter() {
+                for &(ref op, ref value) in &seq {
                     ops.push(AddTerm(op.clone(), value.clone()));
                 }
                 if ops.len() == 1 {
@@ -93,43 +130,6 @@ pub fn program() -> Box<SliceParser<I = [Token], O = Block>> {
         })
     };
 
-    fn code_block() -> Box<SliceParser<I = [Token], O = Block>> {
-        Box::new(lit(Token::OpenBrace)
-                     .then_r(recursive(|| program()))
-                     .then_l(lit(Token::CloseBrace)))
-    }
-
-    fn if_stmt() -> Box<SliceParser<I = [Token], O = Statement>> {
-
-        let comparator = || {
-            matcher(|token| {
-                match token {
-                    Token::Cmp(cmp) => Some(cmp),
-                    _ => None,
-                }
-            })
-        };
-
-
-        let else_block = lit(Token::ElseKeyword).then_r(recursive(if_stmt)
-                                                            .map(|i| Block(vec![i]))
-                                                            .or(boxed(code_block())));
-
-        let p = lit(Token::IfKeyword)
-                    .then_r(recursive(|| expression()))
-                    .then(comparator())
-                    .then(recursive(expression))
-                    .then_l(lit(Token::OpenBrace))
-                    .then(recursive(program))
-                    .then_l(lit(Token::CloseBrace))
-                    .then(opt(else_block))
-                    .map(|((((l, cmp), r), block), else_opt)| {
-                        Statement::If(l, cmp, r, block, else_opt)
-                    });
-
-        Box::new(p)
-    };
-
     let while_stmt = {
         let p = lit(Token::WhileKeyword)
                     .then_r(recursive(expression))
@@ -153,11 +153,11 @@ pub fn program() -> Box<SliceParser<I = [Token], O = Block>> {
     };
     let output = boxed(Box::new(lit(Token::OutputCmd)
                                     .then_r(recursive(|| expression()))
-                                    .map(|e| Statement::Output(e))));
+                                    .map(Statement::Output)));
 
     let statements = one_of(vec![assignment, output, boxed(if_stmt()), while_stmt, loop_stmt])
                          .then_l(lit(Token::NewLine))
                          .repeat();
 
-    Box::new(statements.map(|v| Block(v)))
+    Box::new(statements.map(Block))
 }

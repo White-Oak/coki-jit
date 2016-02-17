@@ -2,10 +2,11 @@
 #![feature(unboxed_closures)]
 extern crate coki_jitter;
 extern crate coki_parser;
+extern crate coki_grammar;
 #[macro_use]
 extern crate clap;
 
-use coki_parser::{parse, Block};
+use coki_parser::*;
 use ir::translate;
 use compiler::compile;
 use coki_jitter::jit::get_jit;

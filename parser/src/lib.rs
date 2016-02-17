@@ -1,22 +1,22 @@
 extern crate peruse;
+extern crate coki_grammar;
 
-mod grammar_lexer;
-mod grammar;
 mod lexer;
 mod parser;
 
-pub use grammar::*;
 use parser::program;
 use lexer::token;
 
-pub fn parse<'a>(raw: &'a str) -> Result<Block, String> {
+pub use coki_grammar::grammar::Block;
+
+pub fn parse(raw: &str) -> Result<Block, String> {
     match token().parse(raw) {
         Ok((tokens, rest)) => {
             println!("{:?}\n", tokens);
             if rest != "" {
                 Err(format!("Parser error at: {:?}", rest))
             } else {
-                match program().parse(tokens.as_slice()) {
+                match program().parse(&tokens) {
                     Ok((block, rest)) => {
                         if rest.len() > 0 {
                             Err(format!("Error: unexpected token {:?}", rest[0]))

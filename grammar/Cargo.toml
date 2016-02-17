@@ -1,0 +1,6 @@
+[package]
+name = "coki_grammar"
+version = "0.1.0"
+authors = ["White-Oak <lpzhelud@gmail.com>"]
+
+[dependencies]

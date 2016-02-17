@@ -1,4 +1,4 @@
-use grammar::*;
+use super::grammar::Comparator;
 
 #[derive(Debug)]
 #[derive(Eq)]

@@ -10,3 +10,4 @@ branch = "no-slice"
 
 [dependencies]
 regex = "0.1.10"
+coki_grammar = { path = "../grammar" }

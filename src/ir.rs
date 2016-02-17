@@ -1,4 +1,4 @@
-use coki_parser::*;
+use coki_grammar::grammar::*;
 use asm_ops::*;
 use asm_ops::AsmOperand::*;
 use asm_ops::AsmOp::*;
@@ -124,7 +124,7 @@ trait AsmableStatement{
 impl AsmableStatement for Statement {
     fn get_ops(&self, mut env: &mut Environment, mut program: &mut AsmProgram) {
         fn match_comparator(cmp: Comparator, label: String) -> AsmOp {
-            use coki_parser::Comparator::*;
+            use coki_grammar::grammar::Comparator::*;
             match cmp {
                 CEq => Je(label),
                 CGt => Ja(label),

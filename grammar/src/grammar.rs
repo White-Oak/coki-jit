@@ -55,7 +55,7 @@ use std::ops::Not;
 impl Not for Comparator{
     type Output = Self;
     fn not(self) -> Self::Output {
-        use Comparator::*;
+        use self::Comparator::*;
         match self {
             CEq => CNeq,
             CGt => CLeq,
