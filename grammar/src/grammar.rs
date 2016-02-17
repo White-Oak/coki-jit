@@ -44,12 +44,12 @@ pub enum Statement {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Comparator {
-    CEq, // ==
-    CGt, // >
-    CLt, // <
-    CNeq, // !=
-    CGeq, // >=
-    CLeq, // <=
+    Eq, // ==
+    Gt, // >
+    Lt, // <
+    Neq, // !=
+    Geq, // >=
+    Leq, // <=
 }
 use std::ops::Not;
 impl Not for Comparator{
@@ -57,12 +57,12 @@ impl Not for Comparator{
     fn not(self) -> Self::Output {
         use self::Comparator::*;
         match self {
-            CEq => CNeq,
-            CGt => CLeq,
-            CLt => CGeq,
-            CNeq => CEq,
-            CGeq => CLt,
-            CLeq => CGt,
+            Eq => Neq,
+            Gt => Leq,
+            Lt => Geq,
+            Neq => Eq,
+            Geq => Lt,
+            Leq => Gt,
         }
     }
 }

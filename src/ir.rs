@@ -126,12 +126,12 @@ impl AsmableStatement for Statement {
         fn match_comparator(cmp: Comparator, label: String) -> AsmOp {
             use coki_grammar::grammar::Comparator::*;
             match cmp {
-                CEq => Je(label),
-                CGt => Ja(label),
-                CLt => Jb(label),
-                CNeq => Jne(label),
-                CGeq => Jae(label),
-                CLeq => Jbe(label),
+                Eq => Je(label),
+                Gt => Ja(label),
+                Lt => Jb(label),
+                Neq => Jne(label),
+                Geq => Jae(label),
+                Leq => Jbe(label),
             }
         }
         println!("\n{:?}\nIs translated into:", self);

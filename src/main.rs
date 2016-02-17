@@ -66,21 +66,14 @@ fn save_for_wrapper(bytes: &[u8]) {
         Ok(_) => println!("Successfully wrote to {}", display),
     }
 
-    let output = Command::new("cargo")
+    let mut child = Command::new("cargo")
                      .arg("build")
                      .arg("--release")
                      .current_dir("wrapper")
-                     .output()
-                     .unwrap_or_else(|e| panic!("failed to execute process: {}", e));;
-
-    if !output.status.success() {
-        println!("status: {}", output.status);
-        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-        panic!("Can't create a binary!");
-    } else {
-        println!("Successfully wrapped to wrapper/target/release/wrapper.exe");
-    }
+                     .spawn()
+                     .unwrap_or_else(|e| panic!("failed to build binary: {}", e));
+    child.wait().unwrap();
+    println!("Successfully wrapped to wrapper/target/release/coki_wrapper");
 }
 
 fn run(bytes: &[u8]) {
