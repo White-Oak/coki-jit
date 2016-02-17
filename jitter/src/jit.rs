@@ -7,47 +7,35 @@ extern "C" {
     fn memset(s: *mut libc::c_void, c: libc::uint32_t, n: libc::size_t) -> *mut libc::c_void;
 }
 
-#[cfg(windows)]
 mod memory {
     extern crate libc;
-    extern crate winapi;
-    extern crate kernel32;
     extern crate alloc;
-
+    
     pub unsafe fn aligned_malloc(size: libc::size_t, alignment: libc::size_t) -> *mut u8 {
         alloc::heap::allocate(size, alignment)
-    }
-
-    pub unsafe fn make_executable(addr: *mut libc::c_void, size: libc::size_t) {
-        let mut _previous_protect: *mut u32 = &mut 0u32 as *mut u32;
-        kernel32::VirtualProtect(addr as *mut ::std::os::raw::c_void,
-                                 size as u64,
-                                 winapi::winnt::PAGE_EXECUTE_READWRITE,
-                                 _previous_protect as u32);
     }
 
     pub unsafe fn free_memory(addr: *mut u8, size: usize, alignment: usize) {
         alloc::heap::deallocate(addr, size, alignment)
     }
-}
 
-#[cfg(unix)]
-mod memory {
-    extern crate libc;
-    extern crate alloc;
-
-    pub unsafe fn aligned_malloc(size: usize, alignment: usize) -> *mut u8 {
-        alloc::heap::allocate(size, alignment)
-    }
-
+    #[cfg(unix)]
     pub unsafe fn make_executable(addr: *mut libc::c_void, size: libc::size_t) {
         libc::mprotect(addr,
                        size,
                        libc::PROT_EXEC | libc::PROT_READ | libc::PROT_WRITE);
     }
 
-    pub unsafe fn free_memory(addr: *mut u8, size: usize, alignment: usize) {
-        alloc::heap::deallocate(addr, size, alignment)
+    #[cfg(windows)]
+    pub unsafe fn make_executable(addr: *mut libc::c_void, size: libc::size_t) {
+        extern crate winapi;
+        extern crate kernel32;
+
+        let mut _previous_protect: *mut u32 = &mut 0u32 as *mut u32;
+        kernel32::VirtualProtect(addr as *mut ::std::os::raw::c_void,
+                                 size as u64,
+                                 winapi::winnt::PAGE_EXECUTE_READWRITE,
+                                 _previous_protect as u32);
     }
 }
 
@@ -70,15 +58,15 @@ impl JitMemory {
     fn new(num_pages: usize) -> JitMemory {
         let contents = unsafe {
             let size = num_pages * PAGE_SIZE;
-            let _contents = memory::aligned_malloc(size, PAGE_SIZE) as *mut libc::c_void;
-            memory::make_executable(_contents, size);
+            let void_contents = memory::aligned_malloc(size, PAGE_SIZE) as *mut libc::c_void;
+            memory::make_executable(void_contents, size);
 
-            memset(_contents, 0xc3, size);  //prepopulate with 'RET'
+            memset(void_contents, 0xc3, size);  //prepopulate with 'RET'
 
-            memset(_contents.offset(VARIABLE_OFFSET as isize),
+            memset(void_contents.offset(VARIABLE_OFFSET as isize),
                    0,
                    VARIABLE_MEMORY_SIZE); //set variable memory area with zeros
-            _contents as *mut u8
+            void_contents as *mut u8
         };
 
         JitMemory {
@@ -97,14 +85,14 @@ impl JitMemory {
 impl Index<usize> for JitMemory {
     type Output = u8;
 
-    fn index(&self, _index: usize) -> &u8 {
-        unsafe { &*self.contents.offset(_index as isize) }
+    fn index(&self, index: usize) -> &u8 {
+        unsafe { &*self.contents.offset(index as isize) }
     }
 }
 
 impl IndexMut<usize> for JitMemory {
-    fn index_mut(&mut self, _index: usize) -> &mut u8 {
-        unsafe { &mut *self.contents.offset(_index as isize) }
+    fn index_mut(&mut self, index: usize) -> &mut u8 {
+        unsafe { &mut *self.contents.offset(index as isize) }
     }
 }
 
